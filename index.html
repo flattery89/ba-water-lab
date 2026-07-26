@@ -1,3 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15110B">
+<meta name="description" content="Brewers Anonymous Water Lab — brew-day water chemistry calculator: mineral additions, mash pH, and sparge acid for all-grain homebrewing.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Water Lab">
 <title>Brewers Anonymous · Water Lab</title>
 <style>
   :root,:root[data-theme="dark"],:root[data-theme="light"]{
@@ -220,6 +230,21 @@
   .sheet-foot{font-family:var(--mono);text-transform:uppercase;letter-spacing:.16em;color:var(--faint);font-size:9px;text-align:center;margin-top:24px;padding-top:14px;border-top:1px solid var(--line);}
   .sheet-empty{color:var(--muted);font-size:13px;padding:10px 2px;font-family:var(--mono);}
 
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  @media (max-width:640px){
+    .wrap{padding:18px 14px 72px;}
+    header.top{gap:13px;padding-bottom:15px;}
+    .club{font-size:28px;}
+    .badge{width:60px;height:60px;}
+    .masthead-meta{align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:10px 14px;width:100%;}
+    .grid{gap:16px;} .card+.card{margin-top:14px;}
+    table.cmp td,table.cmp th{padding:8px 6px;}
+  }
+  @media (max-width:400px){
+    .club{font-size:23px;} .badge{width:52px;height:52px;}
+    .ions{grid-template-columns:repeat(2,1fr);}
+    .phdial .phnum{font-size:40px;}
+  }
   @media print{
     :root,:root[data-theme="dark"],:root[data-theme="light"]{--bg:#fff;--surface:#fff;--surface-2:#fff;--surface-3:#fff;--ink:#000;--muted:#333;--faint:#666;--line:#bbb;--line-2:#999;--amber:#9a6a10;--amber-ink:#7c5400;--shadow:none;}
     body{background:#fff;}
@@ -231,7 +256,8 @@
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <header class="top">
     <img class="badge" src="data:image/png;base64,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" alt="Brewers Anonymous logo">
@@ -535,7 +561,7 @@
       '<div class="metric"><div class="ml">SO₄ : Cl</div><div class="mv">'+(ratio>=99?"∞":fmt(ratio,2))+'</div><div class="md" style="color:var(--amber-ink)">'+rTxt+'</div></div>'+
       '<div class="metric"><div class="ml">Calcium</div><div class="mv">'+fmt(res.Ca,0)+'<span style="font-size:12px;color:var(--faint)"> ppm</span></div><div class="md" style="color:'+
       (res.Ca>=40&&res.Ca<=150?'var(--good)':'var(--warn)')+'">'+(res.Ca<40?'low for mash':res.Ca>150?'high':'good range')+'</div></div></div>'+
-      '<table class="cmp"><thead><tr><th>Ion</th><th>Result</th><th>Target</th><th>Result ▏= aim</th><th>Δ</th></tr></thead><tbody>'+rows+'</tbody></table>'+overNote;
+      '<div class="tablewrap"><table class="cmp"><thead><tr><th>Ion</th><th>Result</th><th>Target</th><th>Result ▏= aim</th><th>Δ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+overNote;
   }
   function mashPhHtml(grist,mashProfile,mg,cal,A,plan){
     if(!(grist.length>0&&mg>0))return '<div class="note">Add malts and a mash volume to predict mash pH and acid.</div>';
@@ -727,3 +753,6 @@
 
 })();
 </script>
+
+</body>
+</html>
