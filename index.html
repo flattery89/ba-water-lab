@@ -197,6 +197,10 @@
   .nosparge input:checked::after{content:"";position:absolute;left:5px;top:2px;width:4px;height:8px;border:solid #14100a;border-width:0 2px 2px 0;transform:rotate(45deg);}
   .nosparge input:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
   .nosparge b{color:var(--amber-ink);}
+  .capout{margin-top:8px;font-family:var(--mono);font-size:12px;line-height:1.55;padding:9px 11px;
+    border-radius:var(--r);border-left:3px solid var(--good);background:var(--surface-2);color:var(--muted);}
+  .capout.over{border-left-color:var(--bad);}
+  .capout b{color:var(--ink);}
   footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;line-height:1.7;letter-spacing:.02em;}
   footer .fmotto{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-size:10px;display:block;margin-bottom:8px;}
 
@@ -397,6 +401,25 @@
           <div class="field"><div class="row between"><label style="margin:0">Mash thickness
             <span class="info" tabindex="0" role="button" aria-label="What is mash thickness?">?<span class="info-pop">The water-to-grain ratio in your mash tun. <b>Thicker</b> (~1.25 qt/lb · 2.6 L/kg) uses less water per pound of grain; <b>thinner</b> (~2.0 qt/lb · 4.2 L/kg) uses more. Most all-grain brewers mash around <b>1.25–1.5 qt/lb (2.6–3.1 L/kg)</b>. Set by your mash-water volume above — thinner mashes shift mash pH slightly.</span></span></label>
             <span class="hint" id="thickOut" style="font-family:var(--mono)"></span></div></div>
+          <div class="field">
+            <label for="tunCap">Mash tun capacity
+              <span class="info" tabindex="0" role="button" aria-label="What is mash tun capacity?">?<span class="info-pop">Your kettle / all-in-one's usable volume (e.g. an Anvil Foundry 10.5). The app checks your mash water plus the grain — which displaces about <b>0.08 gal/lb (≈0.67 L/kg)</b> — actually fits. If it won't, it tells you how much water to hold back and add as a <b>top-up</b> after the mash.</span></span>
+              <span class="hint" id="tunCapUnit">gal · optional</span></label>
+            <input id="tunCap" type="number" min="0" step="0.5" inputmode="decimal" placeholder="e.g. 10.5">
+            <div id="capOut" class="capout" style="display:none"></div>
+          </div>
+          <div class="field">
+            <div class="row between" style="gap:12px">
+              <div class="vol" style="flex:1"><label id="topupLbl">Top-up water (gal)</label>
+                <input id="topupVol" type="number" min="0" step="0.1" value="0" inputmode="decimal"></div>
+              <div class="vol" style="flex:1"><label for="tuRO">Top-up source</label>
+                <div class="units" role="group" aria-label="Top-up source" id="topupToggle">
+                  <button type="button" id="tuRO" aria-pressed="true">RO</button>
+                  <button type="button" id="tuTap" aria-pressed="false">Tap</button>
+                </div></div>
+            </div>
+            <div class="hint" style="margin-top:6px;text-transform:none">Water added <b>after</b> the mash (to the kettle/fermenter). It counts toward the batch total, so salts are dosed for your full volume — <b>RO</b> keeps them undiluted; <b>Tap</b> adds its own minerals.</div>
+          </div>
           <div class="field" id="saltField"><label for="saltSplit">Salt strategy · two vessels</label>
             <select id="saltSplit">
               <option value="proportional">Split salts by volume — both vessels to profile</option>
@@ -611,6 +634,8 @@
   function setUnit(u){state.unit=u;uGal.setAttribute("aria-pressed",u==="gal");uL.setAttribute("aria-pressed",u==="L");
     document.getElementById("mashLbl").textContent="Mash water ("+(u==="gal"?"gal":"L")+")";
     document.getElementById("spargeLbl").textContent="Sparge water ("+(u==="gal"?"gal":"L")+")";
+    document.getElementById("topupLbl").textContent="Top-up water ("+(u==="gal"?"gal":"L")+")";
+    document.getElementById("tunCapUnit").textContent=(u==="gal"?"gal":"L")+" · optional";
     updateThick();}
   uGal.addEventListener("click",function(){setUnit("gal");});uL.addEventListener("click",function(){setUnit("L");});
   function mashGal(){var v=parseFloat(document.getElementById("mashVol").value)||0;return state.unit==="gal"?v:v/GAL_TO_L;}
@@ -619,6 +644,26 @@
   document.getElementById("noSparge").addEventListener("change",function(){
     document.getElementById("spargeVol").disabled=this.checked;
     var a=autoAllocate();renderResults(a.active,a.doses);});
+  // equipment capacity + top-up water
+  function topupGal(){var v=parseFloat(document.getElementById("topupVol").value)||0;return state.unit==="gal"?v:v/GAL_TO_L;}
+  function topupIsTap(){return document.getElementById("tuTap").getAttribute("aria-pressed")==="true";}
+  function capGal(){var v=parseFloat(document.getElementById("tunCap").value);if(isNaN(v)||v<=0)return 0;return state.unit==="gal"?v:v/GAL_TO_L;}
+  // effective source ppm in the FINAL wort: source water fills mash+sparge; top-up is RO (0) or tap (source)
+  function effFinalSrc(src,mg,sg,tu,isTap){var tot=mg+sg+tu,o={};IONS.forEach(function(io){
+    if(tot<=0){o[io.k]=src[io.k];return;}o[io.k]=src[io.k]*(mg+sg+(isTap?tu:0))/tot;});return o;}
+  function setTopupSrc(tap){document.getElementById("tuRO").setAttribute("aria-pressed",!tap);document.getElementById("tuTap").setAttribute("aria-pressed",tap);}
+  document.getElementById("tuRO").addEventListener("click",function(){setTopupSrc(false);updateDerived();});
+  document.getElementById("tuTap").addEventListener("click",function(){setTopupSrc(true);updateDerived();});
+  document.getElementById("topupVol").addEventListener("input",updateDerived);
+  document.getElementById("tunCap").addEventListener("input",function(){updateCap();});
+  function updateCap(){var el=document.getElementById("capOut");if(!el)return;
+    var cap=capGal();if(cap<=0){el.innerHTML="";el.style.display="none";return;}el.style.display="";
+    var lb=gristKg(readGrist())/LB_TO_KG;var disp=lb*0.08;var mg=mashGal();var inTun=mg+disp;
+    function v(x){return state.unit==="gal"?x.toFixed(2)+" gal":(x*GAL_TO_L).toFixed(1)+" L";}
+    if(inTun<=cap+1e-6){el.className="capout";
+      el.innerHTML="In the tun: <b>"+v(inTun)+"</b> ("+v(mg)+" water + "+v(disp)+" grain) of "+v(cap)+" — fits.";}
+    else{el.className="capout over";var maxW=Math.max(0,cap-disp),hold=Math.max(0,mg-maxW);
+      el.innerHTML="⚠ Overflows by <b>"+v(inTun-cap)+"</b>. Mash with ≤ <b>"+v(maxW)+"</b> water and add the remaining <b>"+v(hold)+"</b> as top-up after the mash (set mash to "+v(maxW)+", top-up to "+v(hold)+").";}}
   function gristKg(g){var f=GW2KG[state.gwu]||LB_TO_KG;var kg=0;g.forEach(function(m){kg+=m.wt*f;});return kg;}
   // grain weight unit (lb/oz) and salt weight unit (g/oz)
   function saltDisp(g){return state.swu==="oz"?g*G2OZ:g;}
@@ -642,7 +687,7 @@
   function updateThick(){var g=readGrist(),kg=gristKg(g),mg=mashGal();var out=document.getElementById("thickOut");
     if(kg<=0||mg<=0){out.textContent="—";return;}
     out.textContent=((mg*4)/(kg/LB_TO_KG)).toFixed(2)+" qt/lb · "+((mg*GAL_TO_L)/kg).toFixed(2)+" L/kg";
-    if(typeof updateBlend==="function")updateBlend();}
+    if(typeof updateBlend==="function")updateBlend();if(typeof updateCap==="function")updateCap();}
   ["mashVol","spargeVol"].forEach(function(id){document.getElementById(id).addEventListener("input",updateThick);});
   grainRows.addEventListener("input",updateThick);
 
@@ -713,8 +758,8 @@
     d[s.id]={mash:isNaN(m)?0:saltToG(m),sparge:isNaN(sp)?0:saltToG(sp)};});return d;}
   function profileFrom(active,doses,which,gal,src){var p={};IONS.forEach(function(io){var v=src[io.k];
     if(gal>0)active.forEach(function(s){var g=(doses[s.id]||{})[which]||0;v+=(s.f[io.k]||0)*(g/gal);});p[io.k]=v;});return p;}
-  function combinedProfile(active,doses,mg,sg,src){var tot=mg+sg;var p={};IONS.forEach(function(io){var v=src[io.k];
-    if(tot>0)active.forEach(function(s){var g=((doses[s.id]||{}).mash||0)+((doses[s.id]||{}).sparge||0);v+=(s.f[io.k]||0)*(g/tot);});p[io.k]=v;});return p;}
+  function combinedProfile(active,doses,totGal,effSrc){var p={};IONS.forEach(function(io){var v=effSrc[io.k];
+    if(totGal>0)active.forEach(function(s){var g=((doses[s.id]||{}).mash||0)+((doses[s.id]||{}).sparge||0);v+=(s.f[io.k]||0)*(g/totGal);});p[io.k]=v;});return p;}
   function volLbl(g){return fmt(state.unit==="gal"?g:g*GAL_TO_L,1)+(state.unit==="gal"?" gal":" L");}
   function ionStrip(profile,tgt){return '<div class="ionstrip">'+IONS.map(function(io){
     var cls=classify(profile[io.k],tgt[io.k]);var c=cls==="bd"?" off":cls==="wn"?" warnv":"";
@@ -785,11 +830,12 @@
     acidOverride={mash:null,sparge:null};
     var src=srcWater(),tgt=readIons("tgt");
     var active=SALTS.filter(function(s){return document.getElementById("chk_"+s.id).checked;});
-    var mg=mashGal(),sg=spargeGal(),tot=mg+sg;
+    var mg=mashGal(),sg=spargeGal(),tu=topupGal(),tot=mg+sg+tu,sw=mg+sg;
+    var efs=effFinalSrc(src,mg,sg,tu,topupIsTap());
     var split=document.getElementById("saltSplit").value;var ALK={bak:1,lime:1};
-    var x=solveSalts(active,src,tgt);var d={};
+    var x=solveSalts(active,efs,tgt);var d={};
     active.forEach(function(s,j){var perGal=x[j],totalG=perGal*tot,mashG,spargeG;
-      if(ALK[s.id]||split==="mash"){mashG=totalG;spargeG=0;}else{mashG=perGal*mg;spargeG=perGal*sg;}
+      if(ALK[s.id]||split==="mash"||sw<=0){mashG=totalG;spargeG=0;}else{mashG=totalG*mg/sw;spargeG=totalG*sg/sw;}
       d[s.id]={mash:mashG,sparge:spargeG};});
     return {active:active,doses:d};
   }
@@ -805,7 +851,7 @@
         return '<div class="doserow"><span class="drn">'+s.nm+' <small>'+s.fm+'</small></span>'+
           '<span class="drin"><input type="number" id="'+pfx+'_'+s.id+'" value="'+saltDisp(g).toFixed(dv)+'" min="0" step="'+stp+'" inputmode="decimal"><i>'+state.swu+'</i></span></div>';}).join("")+'</div>';
     }
-    var profileCard='<section class="card rescard" id="cardFinal"><h2><span class="lbl">Final wort profile</span> <span class="hint">combined kettle · '+volLbl(mg+sg)+'</span></h2><div class="body" id="finalDerived"></div></section>';
+    var profileCard='<section class="card rescard" id="cardFinal"><h2><span class="lbl">Final wort profile</span> <span class="hint">combined kettle · '+volLbl(mg+sg+topupGal())+'</span></h2><div class="body" id="finalDerived"></div></section>';
     var mashCard='<section class="card rescard" id="cardMash"><h2><span class="lbl">① Mash tun</span> <span class="hint">'+volLbl(mg)+' · edit any value</span></h2><div class="body">'+
       doseEdit("dm","mash",mg)+'<div class="striplabel">Resulting mash water · ppm</div><div id="mashStrip"></div><div id="mashPh"></div></div></section>';
     var spargeCard=noSparge()?'':'<section class="card rescard" id="cardSparge"><h2><span class="lbl">② Sparge vessel</span> <span class="hint">'+volLbl(sg)+' · edit any value</span></h2><div class="body">'+
@@ -817,20 +863,21 @@
   function updateDerived(){
     var active=resultsActive;if(!active.length)return;
     var src=srcWater(),tgt=readIons("tgt");var grist=readGrist();
-    var mg=mashGal(),sg=spargeGal();var A=currentAcid();var cal=parseFloat(calib.value)||0;
+    var mg=mashGal(),sg=spargeGal(),tu=topupGal(),tot=mg+sg+tu;var A=currentAcid();var cal=parseFloat(calib.value)||0;
+    var efs=effFinalSrc(src,mg,sg,tu,topupIsTap());
     var doses=readDoses(active);
     var mashProfile=mg>0?profileFrom(active,doses,"mash",mg,src):Object.assign({},src);
     var spargeProfile=sg>0?profileFrom(active,doses,"sparge",sg,src):Object.assign({},src);
-    var res=combinedProfile(active,doses,mg,sg,src);
+    var res=combinedProfile(active,doses,tot,efs);
     var plan={style:tgtPreset.value,mg:mg,sg:sg,mash:{items:[],acid:null,ph:null,target:null,needAlk:false},sparge:{items:[],acid:null,spPh:null}};
     active.forEach(function(s){var m=(doses[s.id]||{}).mash||0,sp=(doses[s.id]||{}).sparge||0;
       if(m>=0.01)plan.mash.items.push({amt:m,name:s.nm});if(sp>=0.01)plan.sparge.items.push({amt:sp,name:s.nm});});
-    var fd=document.getElementById("finalDerived");if(fd)fd.innerHTML=finalHtml(res,tgt,src);
+    var fd=document.getElementById("finalDerived");if(fd)fd.innerHTML=finalHtml(res,tgt,efs);
     var ms=document.getElementById("mashStrip");if(ms)ms.innerHTML=ionStrip(mashProfile,tgt);
     var mph=document.getElementById("mashPh");if(mph)mph.innerHTML=mashPhHtml(grist,mashProfile,mg,cal,A,plan);
     var ss=document.getElementById("spargeStrip");if(ss)ss.innerHTML=ionStrip(spargeProfile,tgt);
     var sa=document.getElementById("spargeAcid");if(sa)sa.innerHTML=spargeHtml(spargeProfile,sg,A,plan);
-    var fn=document.getElementById("feasNotes");if(fn)fn.innerHTML=feasHtml(active,res,tgt,src,plan);
+    var fn=document.getElementById("feasNotes");if(fn)fn.innerHTML=feasHtml(active,res,tgt,efs,plan);
     var mai=document.getElementById("mashAcidIn");if(mai)mai.addEventListener("input",onMashAcid);
     var sai=document.getElementById("spargeAcidIn");if(sai)sai.addEventListener("input",onSpargeAcid);
     lastPlan=plan;
@@ -878,7 +925,9 @@
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow="";}});
 
   // ===== CSV save / load =====
-  function gatherState(){return{unit:state.unit,gwu:state.gwu,swu:state.swu,noSparge:noSparge(),srcPreset:srcPreset.value,src:readIons("src"),roDil:roDil.value,
+  function gatherState(){return{unit:state.unit,gwu:state.gwu,swu:state.swu,noSparge:noSparge(),
+    tunCap:document.getElementById("tunCap").value,topupVol:document.getElementById("topupVol").value,topupTap:topupIsTap(),
+    srcPreset:srcPreset.value,src:readIons("src"),roDil:roDil.value,
     tgtPreset:tgtPreset.value,tgt:readIons("tgt"),grist:rawGrist(),
     mashVol:document.getElementById("mashVol").value,spargeVol:document.getElementById("spargeVol").value,
     phTarget:document.getElementById("phTarget").value,spargePh:document.getElementById("spargePh").value,
@@ -893,6 +942,7 @@
     rows.push(["target_ph",st.phTarget]);rows.push(["sparge_ph",st.spargePh]);
     rows.push(["calib",st.calib]);rows.push(["acid",st.acidType]);rows.push(["salt_split",st.saltSplit]);rows.push(["ro_dilution",st.roDil]);
     rows.push(["grain_unit",st.gwu]);rows.push(["salt_unit",st.swu]);rows.push(["no_sparge",st.noSparge?"1":"0"]);
+    rows.push(["tun_cap",st.tunCap]);rows.push(["topup_vol",st.topupVol]);rows.push(["topup_src",st.topupTap?"tap":"ro"]);
     IONS.forEach(function(io){rows.push(["source_"+io.k,st.src[io.k]]);});
     IONS.forEach(function(io){rows.push(["target_"+io.k,st.tgt[io.k]]);});
     rows.push(["salts_on",SALTS.filter(function(s){return st.salts[s.id];}).map(function(s){return s.id;}).join(";")]);
@@ -930,6 +980,9 @@
     document.getElementById("saltSplit").value=map.salt_split||"proportional";
     state.gwu=map.grain_unit||"lb";updateGwUI();state.swu=map.salt_unit||"g";updateSwUI();
     document.getElementById("noSparge").checked=map.no_sparge==="1";document.getElementById("spargeVol").disabled=(map.no_sparge==="1");
+    if("tun_cap" in map)document.getElementById("tunCap").value=map.tun_cap;
+    if("topup_vol" in map)document.getElementById("topupVol").value=map.topup_vol;
+    setTopupSrc(map.topup_src==="tap");updateCap();
     if("ro_dilution" in map){roDil.value=map.ro_dilution||0;roDilVal.textContent=(parseFloat(roDil.value)||0)+"%";}
     var on=(map.salts_on||"").split(";");SALTS.forEach(function(s){document.getElementById("chk_"+s.id).checked=on.indexOf(s.id)>=0;});
     grainRows.innerHTML="";var gs=(map.grist||"").split(";").filter(Boolean);
