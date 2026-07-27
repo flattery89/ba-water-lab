@@ -483,7 +483,10 @@
   var GW2KG={lb:0.45359237, oz:0.0283495231};
   var IONS=[{k:"Ca",n:"Ca",full:"Calcium"},{k:"Mg",n:"Mg",full:"Magnesium"},{k:"Na",n:"Na",full:"Sodium"},
     {k:"SO4",n:"SO₄",full:"Sulfate"},{k:"Cl",n:"Cl",full:"Chloride"},{k:"HCO3",n:"HCO₃",full:"Bicarbonate"}];
-  var W={Ca:1.0,Mg:0.5,Na:0.4,SO4:1.1,Cl:1.1,HCO3:0.7};
+  var W={Ca:1.0,Mg:0.5,Na:0.4,SO4:1.1,Cl:1.1,HCO3:0.55};
+  // solver preference: 0 = use freely (gypsum & CaCl2 build the profile), higher = only reach for it to balance.
+  // Baking soda & lime are penalized so we don't dump alkalinity and then need acid to undo it.
+  var SALT_COST={gyp:0,cacl:0,eps:0.25,mgcl:0.6,nacl:0.6,bak:2.6,lime:1.8};
   var SALTS=[
     {id:"gyp",nm:"Gypsum",fm:"CaSO₄·2H₂O",on:true,f:{Ca:61.5,SO4:147.4}},
     {id:"cacl",nm:"Calcium Chloride",fm:"CaCl₂·2H₂O",on:true,f:{Ca:72.05,Cl:127.4}},
@@ -650,7 +653,7 @@
   // ===== solvers =====
   function solveSalts(active,src,tgt){var b={};IONS.forEach(function(io){b[io.k]=tgt[io.k]-src[io.k];});
     var x=active.map(function(){return 0;});
-    var denom=active.map(function(s){var d=0;IONS.forEach(function(io){var f=s.f[io.k]||0;d+=W[io.k]*f*f;});return d||1e-9;});
+    var denom=active.map(function(s){var d=0;IONS.forEach(function(io){var f=s.f[io.k]||0;d+=W[io.k]*f*f;});return (d||1e-9)*(1+(SALT_COST[s.id]||0));});
     for(var it=0;it<400;it++){var moved=0;for(var j=0;j<active.length;j++){var s=active[j],numer=0;
       IONS.forEach(function(io){var other=0;for(var k=0;k<active.length;k++){if(k!==j)other+=(active[k].f[io.k]||0)*x[k];}
         numer+=W[io.k]*(s.f[io.k]||0)*(b[io.k]-other);});
