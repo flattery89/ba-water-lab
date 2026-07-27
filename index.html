@@ -325,7 +325,7 @@
     </div>
     <div class="masthead-meta">
       <div class="edition">Field Water Manual · <b>No. 001</b></div>
-      <div class="units" role="group" aria-label="Units">
+      <div class="units" role="group" aria-label="Units" id="volToggle">
         <button id="uGal" aria-pressed="true">US gal</button>
         <button id="uL" aria-pressed="false">Liters</button>
       </div>
@@ -359,7 +359,7 @@
 
       <section class="card" id="cardGrain">
         <h2><span class="lbl">Grain bill</span>
-          <span class="units mini" role="group" aria-label="Grain weight unit">
+          <span class="units mini" role="group" aria-label="Grain weight unit" id="gwToggle">
             <button type="button" id="gwLb" aria-pressed="true">lb</button>
             <button type="button" id="gwOz" aria-pressed="false">oz</button>
           </span></h2>
@@ -379,11 +379,11 @@
             <div class="vol" style="flex:1"><label id="spargeLbl">Sparge water (gal)</label>
               <input id="spargeVol" type="number" value="3.5" min="0" step="0.1" inputmode="decimal"></div>
           </div>
-          <label class="nosparge"><input type="checkbox" id="noSparge"><span>No sparge <b>·</b> full-volume / BIAB <span class="hint" style="text-transform:none">(hides the sparge vessel)</span></span></label>
+          <label class="nosparge" id="noSpargeRow"><input type="checkbox" id="noSparge"><span>No sparge <b>·</b> full-volume / BIAB <span class="hint" style="text-transform:none">(hides the sparge vessel)</span></span></label>
           <div id="blend" class="field" style="display:none;margin-top:12px"></div>
           <div class="field"><div class="row between"><label style="margin:0">Mash thickness</label>
             <span class="hint" id="thickOut" style="font-family:var(--mono)"></span></div></div>
-          <div class="field"><label for="saltSplit">Salt strategy · two vessels</label>
+          <div class="field" id="saltField"><label for="saltSplit">Salt strategy · two vessels</label>
             <select id="saltSplit">
               <option value="proportional">Split salts by volume — both vessels to profile</option>
               <option value="mash">All flavor salts in the mash tun</option>
@@ -411,7 +411,7 @@
 
       <section class="card" id="cardShelf">
         <h2><span class="lbl">On the shelf</span>
-          <span class="units mini" role="group" aria-label="Salt weight unit">
+          <span class="units mini" role="group" aria-label="Salt weight unit" id="swToggle">
             <button type="button" id="swG" aria-pressed="true">g</button>
             <button type="button" id="swOz" aria-pressed="false">oz</button>
           </span></h2>
@@ -1003,16 +1003,21 @@
 
   var STEPS=[
     {el:null,t:"Welcome to the Water Lab",b:"A quick tour of the brew-day flow. Use Back / Next, or Skip anytime."},
-    {el:"cardSource",t:"1 · Source water",b:"Enter your water report or pick a preset. Hard tap water? Drag the RO / distilled slider to soften it — the app tells you how much of each to mix."},
-    {el:"cardTarget",t:"2 · Target profile",b:"Pick the water you're aiming for — a modern style or a classic city profile — or type your own numbers."},
-    {el:"cardGrain",t:"3 · Grain bill",b:"Add your malts and weights. Colors auto-fill for known malts but you can edit °L to match your supplier — it drives the mash-pH estimate."},
-    {el:"cardWater",t:"4 · Water split & targets",b:"Set mash and sparge volumes, your target mash pH, and the calibration slider (after you've measured a batch)."},
-    {el:"cardShelf",t:"5 · On the shelf",b:"Check the salts you actually own and choose your acid. The solver only uses what's ticked."},
-    {el:"calcBtn",t:"6 · Calculate",b:"Solve your additions. Re-hit this anytime to reset to the optimal blend."},
+    {el:"volToggle",t:"Units · gallons or liters",b:"Set your measurement system here. Everything — mash & sparge volumes and every addition — follows this choice."},
+    {el:"cardSource",t:"Source water",b:"Enter your water report or pick a preset. Hard tap water? Drag the RO / distilled slider to soften it — the app tells you how much of each to mix."},
+    {el:"cardTarget",t:"Target profile",b:"Pick the water you're aiming for — a modern style or a classic city profile — or type your own numbers."},
+    {el:"cardGrain",t:"Grain bill",b:"Add your malts and weights. Colors auto-fill for known malts but you can edit °L to match your supplier — it drives the mash-pH estimate."},
+    {el:"gwToggle",t:"Grain weight · lb or oz",b:"Weigh your malts in pounds or ounces — handy for small specialty additions. Toggling converts the numbers for you."},
+    {el:"cardWater",t:"Water split & targets",b:"Set your mash and sparge volumes, your target mash pH, and — after you've measured a real batch — the calibration slider to make the pH prediction match your system."},
+    {el:"noSpargeRow",t:"No sparge / BIAB",b:"Brewing full-volume with no sparge (like BIAB)? Tick this and the Sparge vessel disappears — all your water and salts go into a single vessel."},
+    {el:"saltField",t:"Salt strategy",b:"When mash and sparge are separate vessels: split the salts across both waters (each hits the profile), or put all flavor salts in the mash and leave the sparge plain. Alkalinity salts (baking soda, lime) always stay in the mash."},
+    {el:"cardShelf",t:"On the shelf",b:"Check the salts you actually own and choose your acid. The solver only uses what's ticked."},
+    {el:"swToggle",t:"Salt weight · g or oz",b:"Weigh your salt additions in grams or ounces to match your scale. Every dose and the brew-day sheet convert automatically."},
+    {el:"calcBtn",t:"Calculate",b:"Solve your additions. Re-hit this anytime to reset to the optimal blend."},
     {el:"cardFinal",t:"Final wort profile",b:"Your combined water vs target. Watch for guardrail warnings above this card — they flag impossible targets and the fix. They look like this:",ex:'<div class="tour-warn-ex"><b>⚠</b> Your high bicarbonate target is forcing sodium over — enable Slaked Lime, then recalculate.</div>'},
-    {el:"cardMash",t:"① Mash tun",b:"Mash additions, resulting ppm, and predicted pH. Every value is editable — override and watch it recompute live."},
-    {el:"cardSparge",t:"② Sparge vessel",b:"Separate salts and acid for your sparge water."},
-    {el:"recipeStep",t:"③ Save & brew day",b:"Save the recipe as CSV, load one back, or open the printable brew-day checklist. That's the whole flow — brew on!"}
+    {el:"cardMash",t:"① Mash tun",b:"Mash additions, resulting ppm, and predicted pH. Every value — salts and acid — is editable; override and watch it recompute live."},
+    {el:"cardSparge",t:"② Sparge vessel",b:"Separate salts and acid for your sparge water. Also editable."},
+    {el:"recipeStep",t:"Save & brew day",b:"Save the recipe as CSV, load one back, or open the printable brew-day checklist. That's the whole flow — brew on!"}
   ];
   var idx=0,curEl=null;
   var tour=document.getElementById("tour"),tip=document.getElementById("tourTip");
