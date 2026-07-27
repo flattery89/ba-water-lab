@@ -422,13 +422,26 @@
     "Soft tap (typical)":{Ca:25,Mg:5,Na:12,SO4:20,Cl:18,HCO3:40},
     "Moderate tap":{Ca:60,Mg:8,Na:20,SO4:50,Cl:35,HCO3:110},
     "Hard tap":{Ca:110,Mg:18,Na:30,SO4:80,Cl:55,HCO3:220},"Custom":null};
-  var TGT_PRESETS={
+  var TGT_MODERN={
     "Balanced":{Ca:80,Mg:5,Na:15,SO4:80,Cl:80,HCO3:40},
     "Hoppy Pale / IPA":{Ca:110,Mg:8,Na:12,SO4:250,Cl:55,HCO3:40},
     "Juicy NEIPA":{Ca:100,Mg:8,Na:18,SO4:90,Cl:180,HCO3:50},
     "Malty Amber":{Ca:90,Mg:8,Na:22,SO4:60,Cl:140,HCO3:70},
     "Crisp Pilsner (soft)":{Ca:45,Mg:4,Na:6,SO4:55,Cl:45,HCO3:15},
-    "Roasty Stout":{Ca:110,Mg:10,Na:25,SO4:55,Cl:60,HCO3:170},"Custom":null};
+    "Roasty Stout":{Ca:110,Mg:10,Na:25,SO4:55,Cl:60,HCO3:170}};
+  var TGT_CLASSIC={
+    "Pilsen (very soft)":{Ca:7,Mg:3,Na:2,SO4:5,Cl:5,HCO3:15},
+    "Burton-on-Trent":{Ca:275,Mg:40,Na:25,SO4:610,Cl:35,HCO3:270},
+    "Dublin":{Ca:118,Mg:4,Na:12,SO4:55,Cl:19,HCO3:280},
+    "Munich":{Ca:75,Mg:18,Na:10,SO4:10,Cl:2,HCO3:200},
+    "London":{Ca:70,Mg:6,Na:15,SO4:40,Cl:38,HCO3:166},
+    "Dortmund (export)":{Ca:230,Mg:15,Na:40,SO4:120,Cl:60,HCO3:180},
+    "Vienna":{Ca:75,Mg:15,Na:10,SO4:60,Cl:15,HCO3:120},
+    "Edinburgh":{Ca:120,Mg:25,Na:55,SO4:140,Cl:20,HCO3:225}};
+  var TGT_PRESETS={};
+  Object.keys(TGT_MODERN).forEach(function(k){TGT_PRESETS[k]=TGT_MODERN[k];});
+  Object.keys(TGT_CLASSIC).forEach(function(k){TGT_PRESETS[k]=TGT_CLASSIC[k];});
+  TGT_PRESETS["Custom"]=null;
   var MALTS=[
     {n:"Pilsner",L:1.7,t:"base",ph:5.75},{n:"2-Row Pale",L:1.8,t:"base",ph:5.72},
     {n:"Maris Otter",L:3.5,t:"base",ph:5.70},{n:"Vienna",L:3.5,t:"base",ph:5.62},
@@ -458,8 +471,12 @@
   function writeIons(prefix,vals){IONS.forEach(function(io){document.getElementById(prefix+io.k).value=vals[io.k];});}
 
   function fillSelect(sel,presets){Object.keys(presets).forEach(function(n){var o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o);});}
+  function fillTargetSelect(sel){function grp(label,obj){var og=document.createElement("optgroup");og.label=label;
+    Object.keys(obj).forEach(function(n){var o=document.createElement("option");o.value=n;o.textContent=n;og.appendChild(o);});sel.appendChild(og);}
+    grp("Modern styles",TGT_MODERN);grp("Classic profiles",TGT_CLASSIC);
+    var o=document.createElement("option");o.value="Custom";o.textContent="Custom";sel.appendChild(o);}
   var srcPreset=document.getElementById("srcPreset"),tgtPreset=document.getElementById("tgtPreset");
-  fillSelect(srcPreset,SRC_PRESETS);fillSelect(tgtPreset,TGT_PRESETS);
+  fillSelect(srcPreset,SRC_PRESETS);fillTargetSelect(tgtPreset);
   srcPreset.value="Moderate tap";tgtPreset.value="Hoppy Pale / IPA";
   srcPreset.addEventListener("change",function(){if(SRC_PRESETS[srcPreset.value])writeIons("src",SRC_PRESETS[srcPreset.value]);});
   tgtPreset.addEventListener("change",function(){if(TGT_PRESETS[tgtPreset.value])writeIons("tgt",TGT_PRESETS[tgtPreset.value]);});
@@ -479,12 +496,12 @@
     var typ=document.createElement("select");typ.className="type";
     TYPES.forEach(function(t){var o=document.createElement("option");o.value=t;o.textContent=t;typ.appendChild(o);});typ.value=seed.t;
     var del=document.createElement("button");del.className="del";del.type="button";del.innerHTML="×";del.title="Remove";
-    function applyMalt(){if(sel.value!=="custom"){var m=MALTS.filter(function(x){return x.n===sel.value;})[0];
-      if(m){col.value=m.L;typ.value=m.t;col.disabled=true;typ.disabled=true;}}else{col.disabled=false;typ.disabled=false;}}
-    sel.addEventListener("change",function(){applyMalt();updateThick();});
+    function applyMalt(resetColor){if(sel.value!=="custom"){var m=MALTS.filter(function(x){return x.n===sel.value;})[0];
+      if(m){if(resetColor){col.value=m.L;typ.value=m.t;}typ.disabled=true;col.disabled=false;}}else{col.disabled=false;typ.disabled=false;}}
+    sel.addEventListener("change",function(){applyMalt(true);updateThick();});
     del.addEventListener("click",function(){row.remove();updateThick();});
     row.appendChild(sel);row.appendChild(wt);row.appendChild(col);row.appendChild(typ);row.appendChild(del);
-    grainRows.appendChild(row);applyMalt();}
+    grainRows.appendChild(row);applyMalt(false);}
   [{sel:"Maris Otter",wt:9,L:3.5,t:"base"},{sel:"Crystal 60",wt:1,L:60,t:"crystal"}].forEach(makeGrainRow);
   document.getElementById("addGrain").addEventListener("click",function(){makeGrainRow();updateThick();});
 
@@ -492,7 +509,9 @@
     out.push({sel:r.querySelector("select").value,wt:parseFloat(r.querySelector(".wt").value)||0,
       L:parseFloat(r.querySelector(".col").value)||0,t:r.querySelector(".type").value});});return out;}
   function readGrist(){var out=[];rawGrist().forEach(function(g){if(g.wt<=0)return;var ph;
-    if(g.sel!=="custom"){var m=MALTS.filter(function(x){return x.n===g.sel;})[0];ph=m?m.ph:estPh(g.t,g.L);}else ph=estPh(g.t,g.L);
+    if(g.sel!=="custom"){var m=MALTS.filter(function(x){return x.n===g.sel;})[0];
+      if(m){var slope=m.t==="crystal"?0.0092:(m.t==="base"?0.010:0);ph=m.ph-slope*(g.L-m.L);}else ph=estPh(g.t,g.L);}
+    else ph=estPh(g.t,g.L);
     out.push({wt:g.wt,L:g.L,t:g.t,ph:ph});});return out;}
 
   var saltList=document.getElementById("saltList");
