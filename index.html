@@ -182,6 +182,11 @@
   .feaswrap{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
   .note.warn{border-left-color:var(--bad);margin-top:0;}
   .note.info{border-left-color:var(--water);margin-top:0;}
+  .blendrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:6px 0;border-top:1px solid var(--line);}
+  .blendrow:first-of-type{border-top:0;}
+  .blendrow .bl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+  .blendrow .bv{font-family:var(--mono);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right;}
+  .blendrow .bv b{color:var(--amber-ink);font-weight:600;}
   footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;line-height:1.7;letter-spacing:.02em;}
   footer .fmotto{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-size:10px;display:block;margin-bottom:8px;}
 
@@ -320,6 +325,7 @@
             <div class="vol" style="flex:1"><label id="spargeLbl">Sparge water (gal)</label>
               <input id="spargeVol" type="number" value="3.5" min="0" step="0.1" inputmode="decimal"></div>
           </div>
+          <div id="blend" class="field" style="display:none;margin-top:12px"></div>
           <div class="field"><div class="row between"><label style="margin:0">Mash thickness</label>
             <span class="hint" id="thickOut" style="font-family:var(--mono)"></span></div></div>
           <div class="field"><label for="saltSplit">Salt strategy · two vessels</label>
@@ -509,7 +515,8 @@
   function gristKg(g){var kg=0;g.forEach(function(m){kg+=(state.unit==="gal"?m.wt*LB_TO_KG:m.wt);});return kg;}
   function updateThick(){var g=readGrist(),kg=gristKg(g),mg=mashGal();var out=document.getElementById("thickOut");
     if(kg<=0||mg<=0){out.textContent="—";return;}
-    out.textContent=((mg*4)/(kg/LB_TO_KG)).toFixed(2)+" qt/lb · "+((mg*GAL_TO_L)/kg).toFixed(2)+" L/kg";}
+    out.textContent=((mg*4)/(kg/LB_TO_KG)).toFixed(2)+" qt/lb · "+((mg*GAL_TO_L)/kg).toFixed(2)+" L/kg";
+    if(typeof updateBlend==="function")updateBlend();}
   ["mashVol","spargeVol"].forEach(function(id){document.getElementById(id).addEventListener("input",updateThick);});
   grainRows.addEventListener("input",updateThick);
 
@@ -545,7 +552,20 @@
   var roDil=document.getElementById("roDil"),roDilVal=document.getElementById("roDilVal");
   function srcWater(){var s=readIons("src");var d=(parseFloat(roDil.value)||0)/100;
     if(d>0)IONS.forEach(function(io){s[io.k]=s[io.k]*(1-d);});return s;}
-  roDil.addEventListener("input",function(){roDilVal.textContent=(parseFloat(roDil.value)||0)+"%";updateDerived();});
+  function fmtVol(g){return state.unit==="gal"?fmt(g,2)+" gal":fmt(g*GAL_TO_L,1)+" L";}
+  function updateBlend(){
+    var el=document.getElementById("blend");if(!el)return;
+    var d=(parseFloat(roDil.value)||0)/100;
+    if(d<=0){el.innerHTML="";el.style.display="none";return;}
+    el.style.display="";
+    var mg=mashGal(),sg=spargeGal();
+    function line(name,gal){var ro=gal*d,tap=gal*(1-d);
+      return '<div class="blendrow"><span class="bl">'+name+'</span><span class="bv"><b>'+fmtVol(ro)+'</b> RO + <b>'+fmtVol(tap)+'</b> tap</span></div>';}
+    el.innerHTML='<div class="striplabel">'+(parseFloat(roDil.value)||0)+'% RO blend — fill each vessel with</div>'+
+      line("Mash",mg)+(sg>0?line("Sparge",sg):'')+
+      '<div class="hint" style="margin-top:6px;text-transform:none">Mix the water first, then add the salts.</div>';
+  }
+  roDil.addEventListener("input",function(){roDilVal.textContent=(parseFloat(roDil.value)||0)+"%";updateBlend();updateDerived();});
   function feasHtml(active,res,tgt,src,plan){
     var notes=[];var limeOn=document.getElementById("chk_lime").checked;var dil=parseFloat(roDil.value)||0;
     if(!limeOn){
