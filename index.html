@@ -278,6 +278,18 @@
   .btn.mini{padding:6px 11px;font-size:11px;}
   .units.mini{align-self:center;}
   .units.mini button{padding:4px 9px;font-size:10px;letter-spacing:.03em;}
+  /* hover/tap info tooltip */
+  .info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
+    border:1px solid var(--faint);color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:700;
+    cursor:help;position:relative;vertical-align:middle;margin:0 3px;}
+  .info:hover,.info:focus{border-color:var(--amber);color:var(--amber-ink);outline:none;}
+  .info-pop{position:absolute;left:-4px;top:calc(100% + 8px);z-index:50;width:270px;max-width:74vw;
+    background:var(--surface);border:1px solid var(--amber);border-radius:var(--r);box-shadow:var(--shadow);
+    padding:11px 13px;font-family:var(--sans);font-size:12.5px;line-height:1.55;color:var(--muted);
+    text-transform:none;letter-spacing:0;font-weight:500;
+    opacity:0;visibility:hidden;transform:translateY(-3px);transition:opacity .12s,transform .12s;pointer-events:none;}
+  .info-pop b{color:var(--ink);font-weight:700;}
+  .info:hover .info-pop,.info:focus .info-pop,.info.open .info-pop{opacity:1;visibility:visible;transform:translateY(0);}
   /* guided tour (coach marks) */
   .tour[hidden]{display:none;}
   .tour-catch{position:fixed;inset:0;z-index:9000;background:rgba(4,3,2,.58);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
@@ -395,16 +407,12 @@
               <input id="spargePh" type="number" value="5.80" min="4.8" max="7" step="0.05" inputmode="decimal"></div>
           </div>
           <div class="field calib">
-            <div class="crow"><label style="margin:0" for="calib">System calibration <span class="hint">shift prediction to match your meter</span></label>
+            <div class="crow"><label style="margin:0" for="calib">System calibration
+              <span class="info" tabindex="0" role="button" aria-label="What is system calibration?">?<span class="info-pop">The mash-pH prediction is a good estimate, but every system runs a little different. <b>Leave it at 0 until you've brewed.</b> Then measure your actual mash pH with a meter: if the app predicted <b>5.40</b> but your meter read <b>5.50</b>, drag this to <b>+0.10</b> — every future batch is then corrected to your system. (App too high → slide positive; too low → slide negative.)</span></span>
+              <span class="hint">tune to your meter</span></label>
               <span class="cval" id="calibVal">+0.00</span></div>
             <input id="calib" type="range" min="-0.30" max="0.30" step="0.01" value="0">
             <div class="cticks"><span>−0.30 more acidic</span><span>0</span><span>+0.30</span></div>
-            <div class="hint" style="margin-top:9px;text-transform:none;line-height:1.55">
-              <b>What is this?</b> The mash-pH prediction is a good estimate, but every system runs a little different.
-              <b>Leave it at 0 until you've brewed.</b> Then measure your actual mash pH with a meter and compare:
-              if the app predicted <b>5.40</b> but your meter read <b>5.50</b>, drag this to <b>+0.10</b> — now every
-              future batch is corrected to your system. (App too high → slide positive; too low → slide negative.)
-            </div>
           </div>
         </div>
       </section>
@@ -931,6 +939,14 @@
 
   setUnit("gal");
   updateGwUI();updateSwUI();
+  // info tooltips: tap to toggle on touch, outside-tap/Esc to close
+  document.querySelectorAll(".info").forEach(function(el){
+    el.addEventListener("click",function(e){e.stopPropagation();var open=el.classList.contains("open");
+      document.querySelectorAll(".info.open").forEach(function(o){o.classList.remove("open");});
+      if(!open)el.classList.add("open");});
+    el.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();el.classList.toggle("open");}});
+  });
+  document.addEventListener("click",function(){document.querySelectorAll(".info.open").forEach(function(o){o.classList.remove("open");});});
   (function(){var a=autoAllocate();renderResults(a.active,a.doses);})();
 
 })();
