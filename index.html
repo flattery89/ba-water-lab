@@ -95,6 +95,9 @@
   .grainrow .type{font-size:12px;padding:7px 4px;}
   .grainrow .del{border:0;background:transparent;color:var(--faint);cursor:pointer;font-size:17px;line-height:1;padding:2px;border-radius:var(--r);}
   .grainrow .del:hover{color:var(--bad);background:var(--surface-2);}
+  .grainrow .cname{grid-column:1 / -1;padding:7px 8px;font-size:13px;border:1px solid var(--line-2);
+    border-radius:var(--r);background:var(--bg);color:var(--ink);margin-top:1px;}
+  .grainrow .cname:focus{outline:2px solid var(--amber);outline-offset:0;border-color:transparent;}
   .addrow{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--amber-ink);
     background:transparent;border:1px dashed var(--line-2);border-radius:var(--r);padding:9px;width:100%;cursor:pointer;margin-top:2px;}
   .addrow:hover{border-color:var(--amber);color:var(--amber);}
@@ -366,6 +369,19 @@
         <div class="body">
           <div class="field" style="margin-top:0"><label for="tgtPreset">Beer style</label><select id="tgtPreset"></select></div>
           <div class="ions" id="tgtIons" style="margin-top:14px"></div>
+          <div class="field">
+            <label for="so4clBal">Sulfate : Chloride feel
+              <span class="info" tabindex="0" role="button" aria-label="What is the sulfate to chloride ratio?">?<span class="info-pop"><b>Sulfate (SO₄)</b> sharpens hop bitterness and dries the finish; <b>Chloride (Cl)</b> boosts sweetness, body, and mouthfeel. Their ratio sets the beer's character: <b>≤0.5</b> very malty / soft / sweet · <b>0.5–1.0</b> malty · <b>1:1</b> balanced · <b>1.5–2.0</b> hoppy · <b>2.0+</b> very dry / crisp / bitter. Pick a feel and the app sets your SO₄ and Cl targets, keeping their total the same.</span></span>
+            </label>
+            <select id="so4clBal">
+              <option value="">Pick a feel to set SO₄ : Cl…</option>
+              <option value="malty2">Very malty · soft, sweet (≈0.4)</option>
+              <option value="malty">Malty (≈0.7)</option>
+              <option value="balanced">Balanced (1.0)</option>
+              <option value="hoppy">Hoppy (≈1.75)</option>
+              <option value="dry">Very dry · crisp (≈2.5)</option>
+            </select>
+          </div>
         </div>
       </section>
 
@@ -490,6 +506,7 @@
     {id:"bak",nm:"Baking Soda",fm:"NaHCO₃",on:true,f:{Na:72.3,HCO3:191.9}},
     {id:"mgcl",nm:"Magnesium Chloride",fm:"MgCl₂·6H₂O",on:false,f:{Mg:31.57,Cl:92.1}},
     {id:"nacl",nm:"Canning Salt",fm:"NaCl",on:false,f:{Na:103.9,Cl:160.3}},
+    {id:"tbl",nm:"Table Salt",fm:"NaCl",on:false,f:{Na:103.9,Cl:160.3}},
     {id:"lime",nm:"Slaked Lime",fm:"Ca(OH)₂",on:false,f:{Ca:142.9,HCO3:434.8}}
   ];
   var SRC_PRESETS={
@@ -525,14 +542,18 @@
     {n:"Crystal 40",L:40,t:"crystal",ph:5.10},{n:"Crystal 60",L:60,t:"crystal",ph:4.90},
     {n:"Crystal 120",L:120,t:"crystal",ph:4.65},{n:"Special B",L:180,t:"crystal",ph:4.55},
     {n:"Chocolate",L:350,t:"roast",ph:4.65},{n:"Roasted Barley",L:300,t:"roast",ph:4.70},
-    {n:"Black / Patent",L:500,t:"roast",ph:4.58},{n:"Acid malt (Acidulated)",L:2,t:"acid",ph:5.75}
+    {n:"Black / Patent",L:500,t:"roast",ph:4.58},
+    {n:"Flaked Oats",L:1,t:"adjunct",ph:5.9},{n:"Flaked Barley",L:1.5,t:"adjunct",ph:5.9},
+    {n:"Flaked Wheat",L:1,t:"adjunct",ph:5.9},{n:"Flaked Corn / Maize",L:1,t:"adjunct",ph:5.95},
+    {n:"Flaked Rice",L:1,t:"adjunct",ph:5.95},
+    {n:"Acid malt (Acidulated)",L:2,t:"acid",ph:5.75}
   ];
-  var TYPES=["base","crystal","roast","acid"];
+  var TYPES=["base","crystal","roast","adjunct","acid"];
   var BUFFER=45, PH_BASE_NOTE=0.17;
   var state={unit:"gal",gwu:"lb",swu:"g"};
   var lastPlan=null;
 
-  function estPh(t,L){if(t==="acid")return 5.75;if(t==="roast")return 4.62;
+  function estPh(t,L){if(t==="acid")return 5.75;if(t==="roast")return 4.62;if(t==="adjunct")return 5.9;
     if(t==="crystal")return Math.max(4.5,5.62-0.0092*L);return Math.max(5.3,5.78-0.010*L);}
 
   function buildIons(container,prefix,vals){container.innerHTML="";
@@ -553,8 +574,16 @@
   var srcPreset=document.getElementById("srcPreset"),tgtPreset=document.getElementById("tgtPreset");
   fillSelect(srcPreset,SRC_PRESETS);fillTargetSelect(tgtPreset);
   srcPreset.value="Moderate tap";tgtPreset.value="Hoppy Pale / IPA";
-  srcPreset.addEventListener("change",function(){if(SRC_PRESETS[srcPreset.value])writeIons("src",SRC_PRESETS[srcPreset.value]);});
-  tgtPreset.addEventListener("change",function(){if(TGT_PRESETS[tgtPreset.value])writeIons("tgt",TGT_PRESETS[tgtPreset.value]);});
+  srcPreset.addEventListener("change",function(){if(SRC_PRESETS[srcPreset.value])writeIons("src",SRC_PRESETS[srcPreset.value]);if(typeof updateDerived==="function")updateDerived();});
+  tgtPreset.addEventListener("change",function(){if(TGT_PRESETS[tgtPreset.value])writeIons("tgt",TGT_PRESETS[tgtPreset.value]);if(typeof updateDerived==="function")updateDerived();});
+  var SO4CL_RATIOS={malty2:0.4,malty:0.7,balanced:1.0,hoppy:1.75,dry:2.5};
+  document.getElementById("so4clBal").addEventListener("change",function(){
+    var r=SO4CL_RATIOS[this.value];if(r==null)return;
+    var so4=parseFloat(document.getElementById("tgtSO4").value)||0,cl=parseFloat(document.getElementById("tgtCl").value)||0;
+    var sum=so4+cl;if(sum<10)sum=150;
+    var newCl=sum/(1+r);document.getElementById("tgtCl").value=Math.round(newCl);
+    document.getElementById("tgtSO4").value=Math.round(sum-newCl);
+    tgtPreset.value="Custom";this.value="";if(typeof updateDerived==="function")updateDerived();});
   buildIons(document.getElementById("srcIons"),"src",SRC_PRESETS["Moderate tap"]);
   buildIons(document.getElementById("tgtIons"),"tgt",TGT_PRESETS["Hoppy Pale / IPA"]);
 
@@ -571,18 +600,21 @@
     var typ=document.createElement("select");typ.className="type";
     TYPES.forEach(function(t){var o=document.createElement("option");o.value=t;o.textContent=t;typ.appendChild(o);});typ.value=seed.t;
     var del=document.createElement("button");del.className="del";del.type="button";del.innerHTML="×";del.title="Remove";
+    var cname=document.createElement("input");cname.type="text";cname.className="cname";cname.placeholder="Custom malt name (optional)";cname.value=seed.name||"";
     function applyMalt(resetColor){if(sel.value!=="custom"){var m=MALTS.filter(function(x){return x.n===sel.value;})[0];
-      if(m){if(resetColor){col.value=m.L;typ.value=m.t;}typ.disabled=true;col.disabled=false;}}else{col.disabled=false;typ.disabled=false;}}
+      if(m){if(resetColor){col.value=m.L;typ.value=m.t;}typ.disabled=true;col.disabled=false;}cname.style.display="none";}
+      else{col.disabled=false;typ.disabled=false;cname.style.display="";}}
     sel.addEventListener("change",function(){applyMalt(true);updateThick();});
     del.addEventListener("click",function(){row.remove();updateThick();});
-    row.appendChild(sel);row.appendChild(wt);row.appendChild(col);row.appendChild(typ);row.appendChild(del);
+    row.appendChild(sel);row.appendChild(wt);row.appendChild(col);row.appendChild(typ);row.appendChild(del);row.appendChild(cname);
     grainRows.appendChild(row);applyMalt(false);}
   [{sel:"Maris Otter",wt:9,L:3.5,t:"base"},{sel:"Crystal 60",wt:1,L:60,t:"crystal"}].forEach(makeGrainRow);
   document.getElementById("addGrain").addEventListener("click",function(){makeGrainRow();updateThick();});
 
   function rawGrist(){var out=[];grainRows.querySelectorAll(".grainrow").forEach(function(r){
+    var cn=r.querySelector(".cname");
     out.push({sel:r.querySelector("select").value,wt:parseFloat(r.querySelector(".wt").value)||0,
-      L:parseFloat(r.querySelector(".col").value)||0,t:r.querySelector(".type").value});});return out;}
+      L:parseFloat(r.querySelector(".col").value)||0,t:r.querySelector(".type").value,name:cn?cn.value:""});});return out;}
   function readGrist(){var out=[];rawGrist().forEach(function(g){if(g.wt<=0)return;var ph;
     if(g.sel!=="custom"){var m=MALTS.filter(function(x){return x.n===g.sel;})[0];
       if(m){var slope=m.t==="crystal"?0.0092:(m.t==="base"?0.010:0);ph=m.ph-slope*(g.L-m.L);}else ph=estPh(g.t,g.L);}
@@ -713,7 +745,7 @@
 
   function finalHtml(res,tgt,src){
     var ratio=res.Cl>1?res.SO4/res.Cl:(res.SO4>0?99:0);
-    var rTxt=res.SO4<5&&res.Cl<5?"—":ratio>=2?"Very hoppy / dry":ratio>=1.3?"Hoppy":ratio>=0.7?"Balanced":ratio>=0.4?"Malty":"Very malty";
+    var rTxt=res.SO4<5&&res.Cl<5?"—":ratio>=2?"Very dry / crisp":ratio>=1.15?"Hoppy":ratio>=0.85?"Balanced":ratio>=0.5?"Malty":"Very malty / sweet";
     var maxScale={};IONS.forEach(function(io){maxScale[io.k]=Math.max(res[io.k],tgt[io.k],src[io.k],1)*1.15;});
     var rows=IONS.map(function(io){var r=res[io.k],t=tgt[io.k],sc=maxScale[io.k],cls=classify(r,t),d=r-t;
       return '<tr><td class="nm">'+io.n+'<small>'+io.full+'</small></td><td class="num">'+fmt(r,0)+'</td><td class="num tgt">'+fmt(t,0)+
@@ -889,7 +921,7 @@
     IONS.forEach(function(io){rows.push(["source_"+io.k,st.src[io.k]]);});
     IONS.forEach(function(io){rows.push(["target_"+io.k,st.tgt[io.k]]);});
     rows.push(["salts_on",SALTS.filter(function(s){return st.salts[s.id];}).map(function(s){return s.id;}).join(";")]);
-    rows.push(["grist",st.grist.map(function(g){return [g.sel,g.wt,g.L,g.t].join("|");}).join(";")]);
+    rows.push(["grist",st.grist.map(function(g){return [g.sel,g.wt,g.L,g.t,(g.name||"").replace(/[|;]/g," ")].join("|");}).join(";")]);
     var dz=readDoses(resultsActive);
     rows.push(["doses",Object.keys(dz).map(function(id){return id+":"+(dz[id].mash||0).toFixed(3)+":"+(dz[id].sparge||0).toFixed(3);}).join(";")]);
     return rows.map(function(r){return r.map(csvEsc).join(",");}).join("\n");
@@ -926,7 +958,7 @@
     if("ro_dilution" in map){roDil.value=map.ro_dilution||0;roDilVal.textContent=(parseFloat(roDil.value)||0)+"%";}
     var on=(map.salts_on||"").split(";");SALTS.forEach(function(s){document.getElementById("chk_"+s.id).checked=on.indexOf(s.id)>=0;});
     grainRows.innerHTML="";var gs=(map.grist||"").split(";").filter(Boolean);
-    if(gs.length)gs.forEach(function(cell){var p=cell.split("|");makeGrainRow({sel:p[0],wt:parseFloat(p[1])||0,L:parseFloat(p[2])||0,t:p[3]||"base"});});
+    if(gs.length)gs.forEach(function(cell){var p=cell.split("|");makeGrainRow({sel:p[0],wt:parseFloat(p[1])||0,L:parseFloat(p[2])||0,t:p[3]||"base",name:p[4]||""});});
     else makeGrainRow();
     recipeName.value=map.name||"";updateThick();
     var active=SALTS.filter(function(s){return document.getElementById("chk_"+s.id).checked;});
