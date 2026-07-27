@@ -393,7 +393,8 @@
           </div>
           <label class="nosparge" id="noSpargeRow"><input type="checkbox" id="noSparge"><span>No sparge <b>·</b> full-volume / BIAB <span class="hint" style="text-transform:none">(hides the sparge vessel)</span></span></label>
           <div id="blend" class="field" style="display:none;margin-top:12px"></div>
-          <div class="field"><div class="row between"><label style="margin:0">Mash thickness</label>
+          <div class="field"><div class="row between"><label style="margin:0">Mash thickness
+            <span class="info" tabindex="0" role="button" aria-label="What is mash thickness?">?<span class="info-pop">The water-to-grain ratio in your mash tun. <b>Thicker</b> (~1.25 qt/lb · 2.6 L/kg) uses less water per pound of grain; <b>thinner</b> (~2.0 qt/lb · 4.2 L/kg) uses more. Most all-grain brewers mash around <b>1.25–1.5 qt/lb (2.6–3.1 L/kg)</b>. Set by your mash-water volume above — thinner mashes shift mash pH slightly.</span></span></label>
             <span class="hint" id="thickOut" style="font-family:var(--mono)"></span></div></div>
           <div class="field" id="saltField"><label for="saltSplit">Salt strategy · two vessels</label>
             <select id="saltSplit">
@@ -986,16 +987,17 @@
       </ul>
       <h3>Procedure</h3>
       <ol>
+        <li><b>Set your units.</b> Choose gallons or liters in the header, plus <b>lb / oz</b> for grain (Grain bill) and <b>g / oz</b> for salts (On the shelf) to match your scales.</li>
         <li><b>Source water.</b> Pick a preset or type your ppm. If your tap is hard, drag <b>Dilute with RO</b>; the Water split section then shows how much RO and tap to mix in each vessel.</li>
         <li><b>Target profile.</b> Choose a Modern style or Classic city profile, or enter Custom numbers.</li>
-        <li><b>Grain bill.</b> Add each malt and weight. Colors auto-fill for known malts but can be edited to match your maltster.</li>
-        <li><b>Water split &amp; targets.</b> Enter mash and sparge volumes, target mash pH, sparge pH, salt strategy, and (once calibrated) the system calibration.</li>
-        <li><b>On the shelf.</b> Check the salts you actually own and select your acid.</li>
+        <li><b>Grain bill.</b> Add each malt and weight. Colors auto-fill for known malts but can be edited to match your maltster. Add <b>Acid malt</b> here if you use it.</li>
+        <li><b>Water split &amp; targets.</b> Enter mash and sparge volumes, target mash pH, and sparge pH. Tick <b>No sparge</b> for full-volume / BIAB (hides the sparge vessel). Pick a <b>salt strategy</b> — split salts across both waters, or all in the mash. Leave <b>calibration</b> at 0 until you've measured a batch (tap the <b>?</b> for how).</li>
+        <li><b>On the shelf.</b> Check the salts you actually own and select your acid (lactic 88%, phosphoric 10% or 75%).</li>
         <li><b>Calculate.</b> The solver fills the additions for each vessel.</li>
         <li><b>Review.</b> Compare the Final wort profile to target and read any <b>guardrail warnings</b> at the top — they flag unreachable targets and the fix (e.g. enable Slaked Lime, raise RO dilution).</li>
-        <li><b>Fine-tune.</b> Every salt amount is editable per vessel — nudge any value and the resulting ppm and mash pH update live.</li>
+        <li><b>Fine-tune.</b> Every <b>salt and acid</b> amount is editable per vessel — nudge any value and the resulting ppm and mash pH update live.</li>
         <li><b>Save.</b> Name the recipe and <b>Save .csv</b> to your device (or Load one back).</li>
-        <li><b>Brew day.</b> Open the <b>Brew-day sheet</b>, print it or keep it on your phone, and tick off each step: mix RO/tap per the blend guide, weigh salts into the correct vessel, stir in acid, and <b>verify mash pH with your meter</b>. Adjust the calibration slider next time so predictions match your system.</li>
+        <li><b>Brew day.</b> Open the <b>Brew-day sheet</b>, print it or keep it on your phone, and tick off each step: mix RO/tap per the blend guide, weigh salts into the correct vessel, stir in acid, and <b>verify mash pH with your meter</b>. Adjust the calibration next time so predictions match your system.</li>
       </ol>
       <h3>Good to know</h3>
       <ul>
