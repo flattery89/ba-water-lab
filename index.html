@@ -190,6 +190,12 @@
   .blendrow .bl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
   .blendrow .bv{font-family:var(--mono);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right;}
   .blendrow .bv b{color:var(--amber-ink);font-weight:600;}
+  .nosparge{display:flex;align-items:center;gap:9px;margin-top:12px;cursor:pointer;font-size:13px;}
+  .nosparge input{appearance:none;width:17px;height:17px;flex:none;border:1.5px solid var(--faint);border-radius:3px;cursor:pointer;position:relative;background:var(--bg);}
+  .nosparge input:checked{background:var(--amber);border-color:var(--amber);}
+  .nosparge input:checked::after{content:"";position:absolute;left:5px;top:2px;width:4px;height:8px;border:solid #14100a;border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .nosparge input:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+  .nosparge b{color:var(--amber-ink);}
   footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;line-height:1.7;letter-spacing:.02em;}
   footer .fmotto{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-size:10px;display:block;margin-bottom:8px;}
 
@@ -215,6 +221,17 @@
     font-size:14px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--bg);color:var(--ink);}
   .doserow .drin input:focus{outline:2px solid var(--amber);outline-offset:0;border-color:transparent;}
   .doserow .drin i{font-family:var(--mono);font-size:11px;color:var(--faint);font-style:normal;}
+  /* editable acid row */
+  .acidedit{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding:11px 13px;
+    border:1px solid var(--amber);background:var(--amber-soft);border-radius:var(--r);}
+  .acidedit .ael{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--amber-ink);font-weight:600;}
+  .acidedit .aei{display:flex;align-items:center;gap:5px;}
+  .acidedit .aei input{width:74px;padding:6px 8px;font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;
+    font-size:14px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--bg);color:var(--ink);}
+  .acidedit .aei input:focus{outline:2px solid var(--amber);outline-offset:0;border-color:transparent;}
+  .acidedit .aei i{font-family:var(--mono);font-size:11px;color:var(--faint);font-style:normal;}
+  .acidedit .aer{font-family:var(--mono);font-size:13px;color:var(--muted);margin-left:auto;}
+  .acidedit .aer b{font-size:16px;} .acidedit .aer b.ok{color:var(--good);} .acidedit .aer b.wn{color:var(--warn);} .acidedit .aer b.bd{color:var(--bad);}
 
   /* brew-day sheet overlay */
   .sheet-overlay{position:fixed;inset:0;background:rgba(8,6,3,.82);z-index:60;overflow:auto;padding:22px 16px;}
@@ -259,9 +276,11 @@
   /* help buttons */
   .help-btns{display:flex;gap:6px;}
   .btn.mini{padding:6px 11px;font-size:11px;}
+  .units.mini{align-self:center;}
+  .units.mini button{padding:4px 9px;font-size:10px;letter-spacing:.03em;}
   /* guided tour (coach marks) */
   .tour[hidden]{display:none;}
-  .tour-catch{position:fixed;inset:0;z-index:9000;background:#080604;}
+  .tour-catch{position:fixed;inset:0;z-index:9000;background:rgba(4,3,2,.58);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
   .tour-spot{position:relative;z-index:9001!important;border-radius:var(--r);box-shadow:0 0 0 3px var(--amber)!important;}
   .tour-tip{position:fixed;z-index:9002;width:min(340px,calc(100vw - 28px));
     background:#ffffff;border:2px solid #2f6fed;border-radius:8px;box-shadow:0 12px 44px rgba(0,0,0,.55);padding:16px 16px 13px;color:#14181f;}
@@ -269,6 +288,9 @@
   .tour-tip h4{margin:3px 0 7px;font-size:17px;font-weight:700;letter-spacing:-.01em;color:#14181f;}
   .tour-tip p{margin:0 0 13px;font-size:13.5px;color:#41474f;line-height:1.5;}
   .tour-nav{display:flex;gap:8px;align-items:center;}
+  .tour-ex:empty{display:none;}
+  .tour-warn-ex{font-size:12px;line-height:1.45;color:#7a2e22;background:#fdeceb;border-left:3px solid #d6584a;border-radius:4px;padding:8px 10px;margin:-4px 0 13px;}
+  .tour-warn-ex b{color:#d6584a;}
   .tour-nav .btn{border-radius:7px;}
   #tourNext{background:#2f6fed;color:#fff;border-color:#2f6fed;}
   #tourNext:hover{filter:brightness(1.08);color:#fff;}
@@ -336,7 +358,11 @@
       </section>
 
       <section class="card" id="cardGrain">
-        <h2><span class="lbl">Grain bill</span> <span class="hint">for mash pH</span></h2>
+        <h2><span class="lbl">Grain bill</span>
+          <span class="units mini" role="group" aria-label="Grain weight unit">
+            <button type="button" id="gwLb" aria-pressed="true">lb</button>
+            <button type="button" id="gwOz" aria-pressed="false">oz</button>
+          </span></h2>
         <div class="body">
           <div class="grainhead"><span>Malt</span><span id="gwUnit">lb</span><span>°L</span><span>Type</span><span></span></div>
           <div id="grainRows"></div>
@@ -353,6 +379,7 @@
             <div class="vol" style="flex:1"><label id="spargeLbl">Sparge water (gal)</label>
               <input id="spargeVol" type="number" value="3.5" min="0" step="0.1" inputmode="decimal"></div>
           </div>
+          <label class="nosparge"><input type="checkbox" id="noSparge"><span>No sparge <b>·</b> full-volume / BIAB <span class="hint" style="text-transform:none">(hides the sparge vessel)</span></span></label>
           <div id="blend" class="field" style="display:none;margin-top:12px"></div>
           <div class="field"><div class="row between"><label style="margin:0">Mash thickness</label>
             <span class="hint" id="thickOut" style="font-family:var(--mono)"></span></div></div>
@@ -372,16 +399,26 @@
               <span class="cval" id="calibVal">+0.00</span></div>
             <input id="calib" type="range" min="-0.30" max="0.30" step="0.01" value="0">
             <div class="cticks"><span>−0.30 more acidic</span><span>0</span><span>+0.30</span></div>
+            <div class="hint" style="margin-top:9px;text-transform:none;line-height:1.55">
+              <b>What is this?</b> The mash-pH prediction is a good estimate, but every system runs a little different.
+              <b>Leave it at 0 until you've brewed.</b> Then measure your actual mash pH with a meter and compare:
+              if the app predicted <b>5.40</b> but your meter read <b>5.50</b>, drag this to <b>+0.10</b> — now every
+              future batch is corrected to your system. (App too high → slide positive; too low → slide negative.)
+            </div>
           </div>
         </div>
       </section>
 
       <section class="card" id="cardShelf">
-        <h2><span class="lbl">On the shelf</span> <span class="hint">check what you have</span></h2>
+        <h2><span class="lbl">On the shelf</span>
+          <span class="units mini" role="group" aria-label="Salt weight unit">
+            <button type="button" id="swG" aria-pressed="true">g</button>
+            <button type="button" id="swOz" aria-pressed="false">oz</button>
+          </span></h2>
         <div class="body">
           <div class="salts" id="saltList"></div>
           <div class="field"><label for="acidType">Acid (mash &amp; sparge)</label>
-            <select id="acidType"><option value="lactic88">Lactic acid 88%</option><option value="phos10">Phosphoric acid 10%</option></select></div>
+            <select id="acidType"><option value="lactic88">Lactic acid 88%</option><option value="phos10">Phosphoric acid 10%</option><option value="phos75">Phosphoric acid 75%</option></select></div>
           <button class="calc" id="calcBtn">Calculate</button>
         </div>
       </section>
@@ -432,7 +469,8 @@
 <script>
 (function(){
   "use strict";
-  var GAL_TO_L=3.785411784, LB_TO_KG=0.45359237;
+  var GAL_TO_L=3.785411784, LB_TO_KG=0.45359237, OZ2G=28.349523125, G2OZ=1/28.349523125;
+  var GW2KG={lb:0.45359237, oz:0.0283495231};
   var IONS=[{k:"Ca",n:"Ca",full:"Calcium"},{k:"Mg",n:"Mg",full:"Magnesium"},{k:"Na",n:"Na",full:"Sodium"},
     {k:"SO4",n:"SO₄",full:"Sulfate"},{k:"Cl",n:"Cl",full:"Chloride"},{k:"HCO3",n:"HCO₃",full:"Bicarbonate"}];
   var W={Ca:1.0,Mg:0.5,Na:0.4,SO4:1.1,Cl:1.1,HCO3:0.7};
@@ -478,11 +516,11 @@
     {n:"Crystal 40",L:40,t:"crystal",ph:5.10},{n:"Crystal 60",L:60,t:"crystal",ph:4.90},
     {n:"Crystal 120",L:120,t:"crystal",ph:4.65},{n:"Special B",L:180,t:"crystal",ph:4.55},
     {n:"Chocolate",L:350,t:"roast",ph:4.65},{n:"Roasted Barley",L:300,t:"roast",ph:4.70},
-    {n:"Black / Patent",L:500,t:"roast",ph:4.58},{n:"Acidulated",L:2,t:"acid",ph:5.75}
+    {n:"Black / Patent",L:500,t:"roast",ph:4.58},{n:"Acid malt (Acidulated)",L:2,t:"acid",ph:5.75}
   ];
   var TYPES=["base","crystal","roast","acid"];
   var BUFFER=45, PH_BASE_NOTE=0.17;
-  var state={unit:"gal"};
+  var state={unit:"gal",gwu:"lb",swu:"g"};
   var lastPlan=null;
 
   function estPh(t,L){if(t==="acid")return 5.75;if(t==="roast")return 4.62;
@@ -555,11 +593,34 @@
   function setUnit(u){state.unit=u;uGal.setAttribute("aria-pressed",u==="gal");uL.setAttribute("aria-pressed",u==="L");
     document.getElementById("mashLbl").textContent="Mash water ("+(u==="gal"?"gal":"L")+")";
     document.getElementById("spargeLbl").textContent="Sparge water ("+(u==="gal"?"gal":"L")+")";
-    document.getElementById("gwUnit").textContent=u==="gal"?"lb":"kg";updateThick();}
+    updateThick();}
   uGal.addEventListener("click",function(){setUnit("gal");});uL.addEventListener("click",function(){setUnit("L");});
   function mashGal(){var v=parseFloat(document.getElementById("mashVol").value)||0;return state.unit==="gal"?v:v/GAL_TO_L;}
-  function spargeGal(){var v=parseFloat(document.getElementById("spargeVol").value)||0;return state.unit==="gal"?v:v/GAL_TO_L;}
-  function gristKg(g){var kg=0;g.forEach(function(m){kg+=(state.unit==="gal"?m.wt*LB_TO_KG:m.wt);});return kg;}
+  function noSparge(){return document.getElementById("noSparge").checked;}
+  function spargeGal(){if(noSparge())return 0;var v=parseFloat(document.getElementById("spargeVol").value)||0;return state.unit==="gal"?v:v/GAL_TO_L;}
+  document.getElementById("noSparge").addEventListener("change",function(){
+    document.getElementById("spargeVol").disabled=this.checked;
+    var a=autoAllocate();renderResults(a.active,a.doses);});
+  function gristKg(g){var f=GW2KG[state.gwu]||LB_TO_KG;var kg=0;g.forEach(function(m){kg+=m.wt*f;});return kg;}
+  // grain weight unit (lb/oz) and salt weight unit (g/oz)
+  function saltDisp(g){return state.swu==="oz"?g*G2OZ:g;}
+  function saltToG(v){return state.swu==="oz"?v*OZ2G:v;}
+  function updateGwUI(){document.getElementById("gwLb").setAttribute("aria-pressed",state.gwu==="lb");
+    document.getElementById("gwOz").setAttribute("aria-pressed",state.gwu==="oz");
+    document.getElementById("gwUnit").textContent=state.gwu;}
+  function setGwu(u,convert){if(u===state.gwu)return;
+    if(convert){var mult=(state.gwu==="lb"&&u==="oz")?16:(state.gwu==="oz"&&u==="lb")?1/16:1;
+      grainRows.querySelectorAll(".wt").forEach(function(inp){var v=parseFloat(inp.value);if(!isNaN(v))inp.value=String(+((v*mult).toFixed(u==="oz"?1:3)));});}
+    state.gwu=u;updateGwUI();updateThick();if(typeof updateDerived==="function")updateDerived();}
+  function updateSwUI(){document.getElementById("swG").setAttribute("aria-pressed",state.swu==="g");
+    document.getElementById("swOz").setAttribute("aria-pressed",state.swu==="oz");}
+  function setSwu(u){if(u===state.swu)return;
+    if(resultsActive&&resultsActive.length){var d=readDoses(resultsActive);state.swu=u;updateSwUI();renderResults(resultsActive,d);}
+    else{state.swu=u;updateSwUI();}}
+  document.getElementById("gwLb").addEventListener("click",function(){setGwu("lb",true);});
+  document.getElementById("gwOz").addEventListener("click",function(){setGwu("oz",true);});
+  document.getElementById("swG").addEventListener("click",function(){setSwu("g");});
+  document.getElementById("swOz").addEventListener("click",function(){setSwu("oz");});
   function updateThick(){var g=readGrist(),kg=gristKg(g),mg=mashGal();var out=document.getElementById("thickOut");
     if(kg<=0||mg<=0){out.textContent="—";return;}
     out.textContent=((mg*4)/(kg/LB_TO_KG)).toFixed(2)+" qt/lb · "+((mg*GAL_TO_L)/kg).toFixed(2)+" L/kg";
@@ -595,7 +656,9 @@
 
   // ===== derived helpers =====
   function currentAcid(){var t=document.getElementById("acidType").value;
-    return {type:t,mEqPerMl:t==="lactic88"?11.8:1.5,name:t==="lactic88"?"Lactic 88%":"Phosphoric 10%"};}
+    var meq=t==="lactic88"?11.8:t==="phos75"?16.9:1.5;
+    var nm=t==="lactic88"?"Lactic 88%":t==="phos75"?"Phosphoric 75%":"Phosphoric 10%";
+    return {type:t,mEqPerMl:meq,name:nm};}
   var roDil=document.getElementById("roDil"),roDilVal=document.getElementById("roDilVal");
   function srcWater(){var s=readIons("src");var d=(parseFloat(roDil.value)||0)/100;
     if(d>0)IONS.forEach(function(io){s[io.k]=s[io.k]*(1-d);});return s;}
@@ -629,7 +692,7 @@
   function readDoses(active){var d={};active.forEach(function(s){
     var em=document.getElementById("dm_"+s.id),es=document.getElementById("ds_"+s.id);
     var m=em?parseFloat(em.value):0,sp=es?parseFloat(es.value):0;
-    d[s.id]={mash:isNaN(m)?0:m,sparge:isNaN(sp)?0:sp};});return d;}
+    d[s.id]={mash:isNaN(m)?0:saltToG(m),sparge:isNaN(sp)?0:saltToG(sp)};});return d;}
   function profileFrom(active,doses,which,gal,src){var p={};IONS.forEach(function(io){var v=src[io.k];
     if(gal>0)active.forEach(function(s){var g=(doses[s.id]||{})[which]||0;v+=(s.f[io.k]||0)*(g/gal);});p[io.k]=v;});return p;}
   function combinedProfile(active,doses,mg,sg,src){var tot=mg+sg;var p={};IONS.forEach(function(io){var v=src[io.k];
@@ -657,34 +720,53 @@
   function mashPhHtml(grist,mashProfile,mg,cal,A,plan){
     if(!(grist.length>0&&mg>0))return '<div class="note">Add malts and a mash volume to predict mash pH and acid.</div>';
     var mp=mashPh(grist,mashProfile,mg,cal);var tgtPh=parseFloat(document.getElementById("phTarget").value)||5.4;
-    var dPh=mp.predicted-tgtPh;var mashAcidMl=(dPh*mp.kg*BUFFER)/A.mEqPerMl;var needAlk=mashAcidMl<0;
-    plan.mash.ph=mp.predicted;plan.mash.target=tgtPh;plan.mash.needAlk=needAlk;
-    if(!needAlk)plan.mash.acid={amt:mashAcidMl,name:A.name};
+    var autoMl=(mp.predicted-tgtPh)*mp.kg*BUFFER/A.mEqPerMl;
+    var acidVal=acidOverride.mash!=null?acidOverride.mash:Math.max(0,autoMl);
+    var resPh=mp.predicted-(acidVal*A.mEqPerMl)/(mp.kg*BUFFER);
+    acidCtx.mash={predicted:mp.predicted,kg:mp.kg,meq:A.mEqPerMl,target:tgtPh,name:A.name};
+    plan.mash.ph=mp.predicted;plan.mash.target=tgtPh;plan.mash.needAlk=(autoMl<0&&acidOverride.mash==null);
+    plan.mash.acid=acidVal>0.001?{amt:acidVal,name:A.name}:null;
     var lo=4.9,hi=6.0,pos=function(p){return Math.max(0,Math.min(100,(p-lo)/(hi-lo)*100));};
-    var phCls=Math.abs(dPh)<=0.06?'ok':Math.abs(dPh)<=0.15?'wn':'bd';
-    var acidBlock=needAlk
-      ?'<div class="dose"><div class="dn">Predicted pH below target</div><div class="dg" style="font-size:16px;color:var(--warn)">Add alkalinity</div><div class="dsub">raise HCO₃ (baking soda / lime) or cut dark malt</div></div>'
-      :'<div class="dose acid"><div class="dn">'+A.name+' → mash</div><div class="dg">'+fmt(mashAcidMl,1)+'<span>mL</span></div><div class="dsub">brings '+fmt(mp.predicted,2)+' → '+fmt(tgtPh,2)+' pH</div></div>';
-    return '<div class="phbox" style="margin-top:16px"><div class="phdial"><div class="phnum '+phCls+'">'+fmt(mp.predicted,2)+'</div><div class="phlbl">predicted, pre-acid</div></div>'+
+    function cls(p){return Math.abs(p-tgtPh)<=0.06?'ok':Math.abs(p-tgtPh)<=0.15?'wn':'bd';}
+    var alkNote=(autoMl<0&&acidOverride.mash==null)?'<div class="note warn" style="margin-top:12px">Predicted pH is already below target — you likely need <b>alkalinity</b> (baking soda / lime) or less dark malt, not acid.</div>':'';
+    return '<div class="phbox" style="margin-top:16px"><div class="phdial"><div class="phnum '+cls(mp.predicted)+'">'+fmt(mp.predicted,2)+'</div><div class="phlbl">predicted, pre-acid</div></div>'+
       '<div style="flex:1"><div class="phscale"><div class="phmark" style="left:'+pos(mp.predicted)+'%"></div><div class="phmark tgt" style="left:'+pos(tgtPh)+'%"></div><span class="lo">'+lo+'</span><span class="hi">'+hi+'</span></div>'+
       '<div style="font-size:12px;color:var(--muted)">Distilled grist pH <b style="font-family:var(--mono);color:var(--ink)">'+fmt(mp.di-cal,2)+'</b> · water shift <b style="font-family:var(--mono);color:var(--ink)">'+(mp.waterShift>=0?"+":"")+fmt(mp.waterShift,2)+
       '</b> · residual alkalinity <b style="font-family:var(--mono);color:var(--ink)">'+fmt(mp.raCaCO3,0)+'</b> ppm</div></div></div>'+
-      '<div class="doses" style="margin-top:14px">'+acidBlock+'</div>';
+      '<div class="acidedit"><span class="ael">'+A.name+' → mash</span>'+
+        '<span class="aei"><input type="number" id="mashAcidIn" min="0" step="0.1" value="'+acidVal.toFixed(1)+'" inputmode="decimal"><i>mL</i></span>'+
+        '<span class="aer">→ pH <b id="mashAcidPh" class="'+cls(resPh)+'">'+fmt(resPh,2)+'</b></span></div>'+
+      '<div class="hint" style="margin-top:6px;text-transform:none">Auto-filled to hit '+fmt(tgtPh,2)+' — edit the mL to see the resulting pH.</div>'+alkNote;
   }
+  function onMashAcid(){var c=acidCtx.mash;if(!c)return;var el=document.getElementById("mashAcidIn");
+    var v=parseFloat(el.value);if(isNaN(v))v=0;acidOverride.mash=v;
+    var resPh=c.predicted-(v*c.meq)/(c.kg*BUFFER);var span=document.getElementById("mashAcidPh");
+    if(span){span.textContent=fmt(resPh,2);span.className=Math.abs(resPh-c.target)<=0.06?'ok':Math.abs(resPh-c.target)<=0.15?'wn':'bd';}
+    if(lastPlan)lastPlan.mash.acid=v>0.001?{amt:v,name:c.name}:null;}
   function spargeHtml(spargeProfile,sg,A,plan){
     if(sg<=0)return '<div class="note">No-sparge / full-volume mash — enter a sparge volume to split additions.</div>';
     var spPh=parseFloat(document.getElementById("spargePh").value)||5.8;var alk=spargeProfile.HCO3;
-    var spMeq=Math.max(0,(alk/61)*sg*GAL_TO_L*0.9);var spMl=spMeq/A.mEqPerMl;
-    plan.sparge.spPh=spPh;if(alk>=10)plan.sparge.acid={amt:spMl,name:A.name};
-    return alk<10
-      ?'<div class="note">Sparge alkalinity is very low ('+fmt(alk,0)+' ppm HCO₃) — sparge water barely needs acid.</div>'
-      :'<div class="doses" style="margin-top:10px"><div class="dose acid"><div class="dn">'+A.name+' → sparge</div><div class="dg">'+fmt(spMl,1)+'<span>mL</span></div><div class="dsub">neutralize '+fmt(alk,0)+' ppm alkalinity → ~pH '+fmt(spPh,1)+'</div></div>'+
-        '<div class="dose"><div class="dn">Why</div><div class="dg" style="font-size:15px;color:var(--muted)">Stop tannin pull</div><div class="dsub">hot alkaline sparge strips husk tannins</div></div></div>';
+    var autoMl=Math.max(0,(alk/61)*sg*GAL_TO_L*0.9)/A.mEqPerMl;
+    var acidVal=acidOverride.sparge!=null?acidOverride.sparge:autoMl;
+    acidCtx.sparge={sg:sg,meq:A.mEqPerMl,name:A.name,alk:alk,spPh:spPh};
+    plan.sparge.spPh=spPh;plan.sparge.acid=acidVal>0.001?{amt:acidVal,name:A.name}:null;
+    if(alk<10)return '<div class="note">Sparge alkalinity is very low ('+fmt(alk,0)+' ppm HCO₃) — sparge water barely needs acid.</div>';
+    var neut=(acidVal*A.mEqPerMl/(sg*GAL_TO_L))*61;
+    return '<div class="acidedit" style="margin-top:10px"><span class="ael">'+A.name+' → sparge</span>'+
+      '<span class="aei"><input type="number" id="spargeAcidIn" min="0" step="0.1" value="'+acidVal.toFixed(1)+'" inputmode="decimal"><i>mL</i></span>'+
+      '<span class="aer">neutralizes <b id="spargeAcidNeut">'+fmt(neut,0)+'</b> ppm</span></div>'+
+      '<div class="hint" style="margin-top:6px;text-transform:none">Auto-filled to bring '+fmt(alk,0)+' ppm alkalinity to ~pH '+fmt(spPh,1)+' — stops hot sparge from stripping husk tannins. Edit the mL as needed.</div>';
   }
+  function onSpargeAcid(){var c=acidCtx.sparge;if(!c)return;var el=document.getElementById("spargeAcidIn");
+    var v=parseFloat(el.value);if(isNaN(v))v=0;acidOverride.sparge=v;
+    var neut=(v*c.meq/(c.sg*GAL_TO_L))*61;var span=document.getElementById("spargeAcidNeut");if(span)span.textContent=fmt(neut,0);
+    if(lastPlan)lastPlan.sparge.acid=v>0.001?{amt:v,name:c.name}:null;}
 
   // ===== auto solve + render + live update =====
   var resultsActive=[];
+  var acidOverride={mash:null,sparge:null},acidCtx={mash:null,sparge:null};
   function autoAllocate(){
+    acidOverride={mash:null,sparge:null};
     var src=srcWater(),tgt=readIons("tgt");
     var active=SALTS.filter(function(s){return document.getElementById("chk_"+s.id).checked;});
     var mg=mashGal(),sg=spargeGal(),tot=mg+sg;
@@ -702,14 +784,15 @@
     var mg=mashGal(),sg=spargeGal();
     function doseEdit(pfx,which,gal){
       if(gal<=0)return '<div class="note">'+(pfx==="dm"?"Enter a mash volume above.":"No sparge volume — full-volume mash.")+'</div>';
+      var dv=state.swu==="oz"?3:2, stp=state.swu==="oz"?"0.005":"0.1";
       return '<div class="doseedit">'+active.map(function(s){var g=(doses[s.id]||{})[which]||0;
         return '<div class="doserow"><span class="drn">'+s.nm+' <small>'+s.fm+'</small></span>'+
-          '<span class="drin"><input type="number" id="'+pfx+'_'+s.id+'" value="'+g.toFixed(2)+'" min="0" step="0.1" inputmode="decimal"><i>g</i></span></div>';}).join("")+'</div>';
+          '<span class="drin"><input type="number" id="'+pfx+'_'+s.id+'" value="'+saltDisp(g).toFixed(dv)+'" min="0" step="'+stp+'" inputmode="decimal"><i>'+state.swu+'</i></span></div>';}).join("")+'</div>';
     }
     var profileCard='<section class="card rescard" id="cardFinal"><h2><span class="lbl">Final wort profile</span> <span class="hint">combined kettle · '+volLbl(mg+sg)+'</span></h2><div class="body" id="finalDerived"></div></section>';
     var mashCard='<section class="card rescard" id="cardMash"><h2><span class="lbl">① Mash tun</span> <span class="hint">'+volLbl(mg)+' · edit any value</span></h2><div class="body">'+
       doseEdit("dm","mash",mg)+'<div class="striplabel">Resulting mash water · ppm</div><div id="mashStrip"></div><div id="mashPh"></div></div></section>';
-    var spargeCard='<section class="card rescard" id="cardSparge"><h2><span class="lbl">② Sparge vessel</span> <span class="hint">'+volLbl(sg)+' · edit any value</span></h2><div class="body">'+
+    var spargeCard=noSparge()?'':'<section class="card rescard" id="cardSparge"><h2><span class="lbl">② Sparge vessel</span> <span class="hint">'+volLbl(sg)+' · edit any value</span></h2><div class="body">'+
       doseEdit("ds","sparge",sg)+'<div class="striplabel">Resulting sparge water · ppm</div><div id="spargeStrip"></div><div id="spargeAcid"></div></div></section>';
     col.innerHTML='<div id="feasNotes"></div>'+profileCard+mashCard+spargeCard;
     active.forEach(function(s){["dm_","ds_"].forEach(function(pfx){var el=document.getElementById(pfx+s.id);if(el)el.addEventListener("input",updateDerived);});});
@@ -732,6 +815,8 @@
     var ss=document.getElementById("spargeStrip");if(ss)ss.innerHTML=ionStrip(spargeProfile,tgt);
     var sa=document.getElementById("spargeAcid");if(sa)sa.innerHTML=spargeHtml(spargeProfile,sg,A,plan);
     var fn=document.getElementById("feasNotes");if(fn)fn.innerHTML=feasHtml(active,res,tgt,src,plan);
+    var mai=document.getElementById("mashAcidIn");if(mai)mai.addEventListener("input",onMashAcid);
+    var sai=document.getElementById("spargeAcidIn");if(sai)sai.addEventListener("input",onSpargeAcid);
     lastPlan=plan;
     requestAnimationFrame(function(){var f=document.querySelectorAll("#finalDerived .fill");for(var i=0;i<f.length;i++)f[i].style.width=f[i].getAttribute("data-w")+"%";});
   }
@@ -744,20 +829,20 @@
 
   // ===== brew-day sheet =====
   var recipeName=document.getElementById("recipeName");
-  function amtLine(amt,unit,name,note,idx){
+  function amtLine(amt,unit,name,note,idx){var dec=unit==="oz"?2:1;
     return '<label class="check-item"><input type="checkbox" data-ci="'+idx+'"><span class="amt">'+
-      fmt(amt,1)+'<span>'+unit+'</span></span><span class="txt">'+name+(note?'<small>'+note+'</small>':'')+'</span></label>';
+      fmt(amt,dec)+'<span>'+unit+'</span></span><span class="txt">'+name+(note?'<small>'+note+'</small>':'')+'</span></label>';
   }
   function buildSheet(){
     var b=document.getElementById("sheetBody");
     if(!lastPlan){b.innerHTML='<div class="sheet-empty">Hit Calculate first, then open the brew-day sheet.</div>';return;}
     var p=lastPlan,idx=0;var name=(recipeName.value||p.style||"Untitled brew");
     var g=state.unit==="gal";function vol(v){return fmt(g?v:v*GAL_TO_L,1)+(g?" gal":" L");}
-    var mashItems=p.mash.items.map(function(it){return amtLine(it.amt,"g",it.name,"weigh into mash tun",idx++);}).join("");
+    var mashItems=p.mash.items.map(function(it){return amtLine(saltDisp(it.amt),state.swu,it.name,"weigh into mash tun",idx++);}).join("");
     if(p.mash.acid)mashItems+=amtLine(p.mash.acid.amt,"mL",p.mash.acid.name,"stir into mash → pH "+fmt(p.mash.target,2),idx++);
     if(p.mash.needAlk)mashItems+='<div class="sheet-empty">Predicted pH below target — add alkalinity (baking soda/lime) or reduce dark malt.</div>';
     if(!mashItems)mashItems='<div class="sheet-empty">No additions.</div>';
-    var spItems=p.sparge.items.map(function(it){return amtLine(it.amt,"g",it.name,"weigh into sparge water",idx++);}).join("");
+    var spItems=p.sparge.items.map(function(it){return amtLine(saltDisp(it.amt),state.swu,it.name,"weigh into sparge water",idx++);}).join("");
     if(p.sparge.acid)spItems+=amtLine(p.sparge.acid.amt,"mL",p.sparge.acid.name,"stir into sparge → ~pH "+fmt(p.sparge.spPh,1),idx++);
     if(!spItems)spItems='<div class="sheet-empty">No additions.</div>';
     var phTxt=p.mash.ph!=null?" · predicted mash pH "+fmt(p.mash.ph,2):"";
@@ -777,7 +862,7 @@
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow="";}});
 
   // ===== CSV save / load =====
-  function gatherState(){return{unit:state.unit,srcPreset:srcPreset.value,src:readIons("src"),roDil:roDil.value,
+  function gatherState(){return{unit:state.unit,gwu:state.gwu,swu:state.swu,noSparge:noSparge(),srcPreset:srcPreset.value,src:readIons("src"),roDil:roDil.value,
     tgtPreset:tgtPreset.value,tgt:readIons("tgt"),grist:rawGrist(),
     mashVol:document.getElementById("mashVol").value,spargeVol:document.getElementById("spargeVol").value,
     phTarget:document.getElementById("phTarget").value,spargePh:document.getElementById("spargePh").value,
@@ -791,6 +876,7 @@
     rows.push(["mash_vol",st.mashVol]);rows.push(["sparge_vol",st.spargeVol]);
     rows.push(["target_ph",st.phTarget]);rows.push(["sparge_ph",st.spargePh]);
     rows.push(["calib",st.calib]);rows.push(["acid",st.acidType]);rows.push(["salt_split",st.saltSplit]);rows.push(["ro_dilution",st.roDil]);
+    rows.push(["grain_unit",st.gwu]);rows.push(["salt_unit",st.swu]);rows.push(["no_sparge",st.noSparge?"1":"0"]);
     IONS.forEach(function(io){rows.push(["source_"+io.k,st.src[io.k]]);});
     IONS.forEach(function(io){rows.push(["target_"+io.k,st.tgt[io.k]]);});
     rows.push(["salts_on",SALTS.filter(function(s){return st.salts[s.id];}).map(function(s){return s.id;}).join(";")]);
@@ -826,6 +912,8 @@
     calib.value=map.calib||0;calibVal.textContent=fmtSigned(parseFloat(calib.value)||0);
     document.getElementById("acidType").value=map.acid||"lactic88";
     document.getElementById("saltSplit").value=map.salt_split||"proportional";
+    state.gwu=map.grain_unit||"lb";updateGwUI();state.swu=map.salt_unit||"g";updateSwUI();
+    document.getElementById("noSparge").checked=map.no_sparge==="1";document.getElementById("spargeVol").disabled=(map.no_sparge==="1");
     if("ro_dilution" in map){roDil.value=map.ro_dilution||0;roDilVal.textContent=(parseFloat(roDil.value)||0)+"%";}
     var on=(map.salts_on||"").split(";");SALTS.forEach(function(s){document.getElementById("chk_"+s.id).checked=on.indexOf(s.id)>=0;});
     grainRows.innerHTML="";var gs=(map.grist||"").split(";").filter(Boolean);
@@ -842,6 +930,7 @@
     r.onload=function(){try{applyCsv(parseCsv(String(r.result)));}catch(e){}};r.readAsText(f);this.value="";});
 
   setUnit("gal");
+  updateGwUI();updateSwUI();
   (function(){var a=autoAllocate();renderResults(a.active,a.doses);})();
 
 })();
@@ -853,6 +942,7 @@
     <div class="tour-step" id="tourStep"></div>
     <h4 id="tourTitle"></h4>
     <p id="tourBody"></p>
+    <div class="tour-ex" id="tourEx"></div>
     <div class="tour-nav">
       <button id="tourSkip" class="btn ghost">Skip</button>
       <span style="flex:1"></span>
@@ -919,7 +1009,7 @@
     {el:"cardWater",t:"4 · Water split & targets",b:"Set mash and sparge volumes, your target mash pH, and the calibration slider (after you've measured a batch)."},
     {el:"cardShelf",t:"5 · On the shelf",b:"Check the salts you actually own and choose your acid. The solver only uses what's ticked."},
     {el:"calcBtn",t:"6 · Calculate",b:"Solve your additions. Re-hit this anytime to reset to the optimal blend."},
-    {el:"cardFinal",t:"Final wort profile",b:"Your combined water vs target. Warnings up top flag impossible targets and how to fix them."},
+    {el:"cardFinal",t:"Final wort profile",b:"Your combined water vs target. Watch for guardrail warnings above this card — they flag impossible targets and the fix. They look like this:",ex:'<div class="tour-warn-ex"><b>⚠</b> Your high bicarbonate target is forcing sodium over — enable Slaked Lime, then recalculate.</div>'},
     {el:"cardMash",t:"① Mash tun",b:"Mash additions, resulting ppm, and predicted pH. Every value is editable — override and watch it recompute live."},
     {el:"cardSparge",t:"② Sparge vessel",b:"Separate salts and acid for your sparge water."},
     {el:"recipeStep",t:"③ Save & brew day",b:"Save the recipe as CSV, load one back, or open the printable brew-day checklist. That's the whole flow — brew on!"}
@@ -940,6 +1030,7 @@
     document.getElementById("tourStep").textContent="Step "+(idx+1)+" of "+STEPS.length;
     document.getElementById("tourTitle").textContent=s.t;
     document.getElementById("tourBody").textContent=s.b;
+    document.getElementById("tourEx").innerHTML=s.ex||"";
     document.getElementById("tourBack").style.visibility=idx===0?"hidden":"visible";
     document.getElementById("tourNext").textContent=idx===STEPS.length-1?"Finish":"Next";
     if(s.el){var el=document.getElementById(s.el);if(el){curEl=el;el.scrollIntoView({block:"center"});el.classList.add("tour-spot");}}
