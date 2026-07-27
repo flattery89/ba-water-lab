@@ -201,6 +201,9 @@
     border-radius:var(--r);border-left:3px solid var(--good);background:var(--surface-2);color:var(--muted);}
   .capout.over{border-left-color:var(--bad);}
   .capout b{color:var(--ink);}
+  .fitbtn{display:inline-block;margin-top:7px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;
+    color:#141207;background:var(--amber);border:0;border-radius:var(--r);padding:5px 11px;cursor:pointer;}
+  .fitbtn:hover{filter:brightness(1.07);}
   footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;line-height:1.7;letter-spacing:.02em;}
   footer .fmotto{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-size:10px;display:block;margin-bottom:8px;}
 
@@ -422,8 +425,8 @@
           </div>
           <div class="field" id="saltField"><label for="saltSplit">Salt strategy · two vessels</label>
             <select id="saltSplit">
-              <option value="proportional">Split salts by volume — both vessels to profile</option>
-              <option value="mash">All flavor salts in the mash tun</option>
+              <option value="proportional">Split salts by volume — every water to profile</option>
+              <option value="mash">All flavor salts in the mash tun (concentrate)</option>
             </select></div>
           <div class="row between" style="gap:12px;margin-top:12px">
             <div class="vol" style="flex:1"><label for="phTarget">Target mash pH</label>
@@ -663,7 +666,14 @@
     if(inTun<=cap+1e-6){el.className="capout";
       el.innerHTML="In the tun: <b>"+v(inTun)+"</b> ("+v(mg)+" water + "+v(disp)+" grain) of "+v(cap)+" — fits.";}
     else{el.className="capout over";var maxW=Math.max(0,cap-disp),hold=Math.max(0,mg-maxW);
-      el.innerHTML="⚠ Overflows by <b>"+v(inTun-cap)+"</b>. Mash with ≤ <b>"+v(maxW)+"</b> water and add the remaining <b>"+v(hold)+"</b> as top-up after the mash (set mash to "+v(maxW)+", top-up to "+v(hold)+").";}}
+      el.innerHTML="⚠ Overflows by <b>"+v(inTun-cap)+"</b>. Mash with ≤ <b>"+v(maxW)+"</b> water and hold back <b>"+v(hold)+"</b> as top-up. <button type=\"button\" class=\"fitbtn\" id=\"fitBtn\">Fit to tun →</button>";
+      var fb=document.getElementById("fitBtn");if(fb)fb.addEventListener("click",fitToTun);}}
+  function fitToTun(){var cap=capGal();if(cap<=0)return;var lb=gristKg(readGrist())/LB_TO_KG,disp=lb*0.08;
+    var maxW=Math.max(0,cap-disp),mgCur=mashGal(),excess=Math.max(0,mgCur-maxW);if(excess<=0)return;
+    var toU=function(g){return state.unit==="gal"?g:g*GAL_TO_L;};
+    document.getElementById("mashVol").value=(+toU(maxW).toFixed(2));
+    document.getElementById("topupVol").value=(+toU(topupGal()+excess).toFixed(2));
+    updateThick();var a=autoAllocate();renderResults(a.active,a.doses);}
   function gristKg(g){var f=GW2KG[state.gwu]||LB_TO_KG;var kg=0;g.forEach(function(m){kg+=m.wt*f;});return kg;}
   // grain weight unit (lb/oz) and salt weight unit (g/oz)
   function saltDisp(g){return state.swu==="oz"?g*G2OZ:g;}
@@ -753,13 +763,14 @@
     return '<div class="feaswrap">'+notes.slice(0,3).map(function(n){return '<div class="note '+n.t+'">'+n.h+'</div>';}).join("")+'</div>';
   }
   function readDoses(active){var d={};active.forEach(function(s){
-    var em=document.getElementById("dm_"+s.id),es=document.getElementById("ds_"+s.id);
-    var m=em?parseFloat(em.value):0,sp=es?parseFloat(es.value):0;
-    d[s.id]={mash:isNaN(m)?0:saltToG(m),sparge:isNaN(sp)?0:saltToG(sp)};});return d;}
+    var em=document.getElementById("dm_"+s.id),es=document.getElementById("ds_"+s.id),et=document.getElementById("dt_"+s.id);
+    var m=em?parseFloat(em.value):0,sp=es?parseFloat(es.value):0,tp=et?parseFloat(et.value):0;
+    d[s.id]={mash:isNaN(m)?0:saltToG(m),sparge:isNaN(sp)?0:saltToG(sp),topup:isNaN(tp)?0:saltToG(tp)};});return d;}
   function profileFrom(active,doses,which,gal,src){var p={};IONS.forEach(function(io){var v=src[io.k];
     if(gal>0)active.forEach(function(s){var g=(doses[s.id]||{})[which]||0;v+=(s.f[io.k]||0)*(g/gal);});p[io.k]=v;});return p;}
   function combinedProfile(active,doses,totGal,effSrc){var p={};IONS.forEach(function(io){var v=effSrc[io.k];
-    if(totGal>0)active.forEach(function(s){var g=((doses[s.id]||{}).mash||0)+((doses[s.id]||{}).sparge||0);v+=(s.f[io.k]||0)*(g/totGal);});p[io.k]=v;});return p;}
+    if(totGal>0)active.forEach(function(s){var g=((doses[s.id]||{}).mash||0)+((doses[s.id]||{}).sparge||0)+((doses[s.id]||{}).topup||0);v+=(s.f[io.k]||0)*(g/totGal);});p[io.k]=v;});return p;}
+  function zeros(){var z={};IONS.forEach(function(io){z[io.k]=0;});return z;}
   function volLbl(g){return fmt(state.unit==="gal"?g:g*GAL_TO_L,1)+(state.unit==="gal"?" gal":" L");}
   function ionStrip(profile,tgt){return '<div class="ionstrip">'+IONS.map(function(io){
     var cls=classify(profile[io.k],tgt[io.k]);var c=cls==="bd"?" off":cls==="wn"?" warnv":"";
@@ -830,13 +841,14 @@
     acidOverride={mash:null,sparge:null};
     var src=srcWater(),tgt=readIons("tgt");
     var active=SALTS.filter(function(s){return document.getElementById("chk_"+s.id).checked;});
-    var mg=mashGal(),sg=spargeGal(),tu=topupGal(),tot=mg+sg+tu,sw=mg+sg;
+    var mg=mashGal(),sg=spargeGal(),tu=topupGal(),tot=mg+sg+tu;
     var efs=effFinalSrc(src,mg,sg,tu,topupIsTap());
     var split=document.getElementById("saltSplit").value;var ALK={bak:1,lime:1};
     var x=solveSalts(active,efs,tgt);var d={};
-    active.forEach(function(s,j){var perGal=x[j],totalG=perGal*tot,mashG,spargeG;
-      if(ALK[s.id]||split==="mash"||sw<=0){mashG=totalG;spargeG=0;}else{mashG=totalG*mg/sw;spargeG=totalG*sg/sw;}
-      d[s.id]={mash:mashG,sparge:spargeG};});
+    active.forEach(function(s,j){var perGal=x[j],totalG=perGal*tot,mashG,spargeG,topupG;
+      if(ALK[s.id]||split==="mash"||tot<=0){mashG=totalG;spargeG=0;topupG=0;}
+      else{mashG=totalG*mg/tot;spargeG=totalG*sg/tot;topupG=totalG*tu/tot;}
+      d[s.id]={mash:mashG,sparge:spargeG,topup:topupG};});
     return {active:active,doses:d};
   }
   function renderResults(active,doses){
@@ -856,8 +868,12 @@
       doseEdit("dm","mash",mg)+'<div class="striplabel">Resulting mash water · ppm</div><div id="mashStrip"></div><div id="mashPh"></div></div></section>';
     var spargeCard=noSparge()?'':'<section class="card rescard" id="cardSparge"><h2><span class="lbl">② Sparge vessel</span> <span class="hint">'+volLbl(sg)+' · edit any value</span></h2><div class="body">'+
       doseEdit("ds","sparge",sg)+'<div class="striplabel">Resulting sparge water · ppm</div><div id="spargeStrip"></div><div id="spargeAcid"></div></div></section>';
-    col.innerHTML='<div id="feasNotes"></div>'+profileCard+mashCard+spargeCard;
-    active.forEach(function(s){["dm_","ds_"].forEach(function(pfx){var el=document.getElementById(pfx+s.id);if(el)el.addEventListener("input",updateDerived);});});
+    var tu=topupGal();
+    var topupCard=tu<=0?'':'<section class="card rescard" id="cardTopup"><h2><span class="lbl">③ Top-up / kettle</span> <span class="hint">'+volLbl(tu)+' · added after the mash</span></h2><div class="body">'+
+      doseEdit("dt","topup",tu)+'<div class="striplabel">Resulting top-up water · ppm</div><div id="topupStrip"></div>'+
+      '<div class="hint" style="margin-top:8px;text-transform:none">These salts (if any) go into the top-up water / kettle, not the mash — so they don\'t change mash pH. Added by the <b>Split</b> strategy; <b>All-in-mash</b> leaves this empty.</div></div></section>';
+    col.innerHTML='<div id="feasNotes"></div>'+profileCard+mashCard+spargeCard+topupCard;
+    active.forEach(function(s){["dm_","ds_","dt_"].forEach(function(pfx){var el=document.getElementById(pfx+s.id);if(el)el.addEventListener("input",updateDerived);});});
     updateDerived();
   }
   function updateDerived(){
@@ -869,13 +885,14 @@
     var mashProfile=mg>0?profileFrom(active,doses,"mash",mg,src):Object.assign({},src);
     var spargeProfile=sg>0?profileFrom(active,doses,"sparge",sg,src):Object.assign({},src);
     var res=combinedProfile(active,doses,tot,efs);
-    var plan={style:tgtPreset.value,mg:mg,sg:sg,mash:{items:[],acid:null,ph:null,target:null,needAlk:false},sparge:{items:[],acid:null,spPh:null}};
-    active.forEach(function(s){var m=(doses[s.id]||{}).mash||0,sp=(doses[s.id]||{}).sparge||0;
-      if(m>=0.01)plan.mash.items.push({amt:m,name:s.nm});if(sp>=0.01)plan.sparge.items.push({amt:sp,name:s.nm});});
+    var plan={style:tgtPreset.value,mg:mg,sg:sg,tu:tu,mash:{items:[],acid:null,ph:null,target:null,needAlk:false},sparge:{items:[],acid:null,spPh:null},topup:{items:[],tap:topupIsTap()}};
+    active.forEach(function(s){var m=(doses[s.id]||{}).mash||0,sp=(doses[s.id]||{}).sparge||0,tp=(doses[s.id]||{}).topup||0;
+      if(m>=0.01)plan.mash.items.push({amt:m,name:s.nm});if(sp>=0.01)plan.sparge.items.push({amt:sp,name:s.nm});if(tp>=0.01)plan.topup.items.push({amt:tp,name:s.nm});});
     var fd=document.getElementById("finalDerived");if(fd)fd.innerHTML=finalHtml(res,tgt,efs);
     var ms=document.getElementById("mashStrip");if(ms)ms.innerHTML=ionStrip(mashProfile,tgt);
     var mph=document.getElementById("mashPh");if(mph)mph.innerHTML=mashPhHtml(grist,mashProfile,mg,cal,A,plan);
     var ss=document.getElementById("spargeStrip");if(ss)ss.innerHTML=ionStrip(spargeProfile,tgt);
+    var tps=document.getElementById("topupStrip");if(tps){var topupProfile=tu>0?profileFrom(active,doses,"topup",tu,topupIsTap()?src:zeros()):zeros();tps.innerHTML=ionStrip(topupProfile,tgt);}
     var sa=document.getElementById("spargeAcid");if(sa)sa.innerHTML=spargeHtml(spargeProfile,sg,A,plan);
     var fn=document.getElementById("feasNotes");if(fn)fn.innerHTML=feasHtml(active,res,tgt,efs,plan);
     var mai=document.getElementById("mashAcidIn");if(mai)mai.addEventListener("input",onMashAcid);
@@ -908,13 +925,15 @@
     var spItems=p.sparge.items.map(function(it){return amtLine(saltDisp(it.amt),state.swu,it.name,"weigh into sparge water",idx++);}).join("");
     if(p.sparge.acid)spItems+=amtLine(p.sparge.acid.amt,"mL",p.sparge.acid.name,"stir into sparge → ~pH "+fmt(p.sparge.spPh,1),idx++);
     if(!spItems)spItems='<div class="sheet-empty">No additions.</div>';
+    var tuItems=(p.topup&&p.topup.items||[]).map(function(it){return amtLine(saltDisp(it.amt),state.swu,it.name,"add to top-up / kettle",idx++);}).join("");
     var phTxt=p.mash.ph!=null?" · predicted mash pH "+fmt(p.mash.ph,2):"";
     b.innerHTML=
       '<div class="sheet-head"><div class="sh-club">Brewers <b>Anonymous</b> · Water Sheet</div>'+
       '<div class="sh-recipe">'+name+'</div>'+
       '<div class="sh-meta">'+p.style+' · mash '+vol(p.mg)+' · sparge '+vol(p.sg)+phTxt+'</div></div>'+
       '<div class="vessel-h">① Mash Tun <span class="vol">'+vol(p.mg)+'</span>'+(p.mash.ph!=null?'<span class="ph">→ pH '+fmt(p.mash.target,2)+'</span>':'')+'</div>'+mashItems+
-      '<div class="vessel-h">② Sparge Vessel <span class="vol">'+vol(p.sg)+'</span>'+(p.sparge.spPh!=null?'<span class="ph">→ ~pH '+fmt(p.sparge.spPh,1)+'</span>':'')+'</div>'+spItems;
+      (p.sg>0?'<div class="vessel-h">② Sparge Vessel <span class="vol">'+vol(p.sg)+'</span>'+(p.sparge.spPh!=null?'<span class="ph">→ ~pH '+fmt(p.sparge.spPh,1)+'</span>':'')+'</div>'+spItems:'')+
+      (p.tu>0?'<div class="vessel-h">'+(p.sg>0?'③':'②')+' Top-up / Kettle <span class="vol">'+vol(p.tu)+'</span></div>'+(tuItems||'<div class="sheet-empty">No salts — plain '+(p.topup.tap?'tap':'RO')+' water.</div>'):'');
     b.querySelectorAll(".check-item input").forEach(function(cb){cb.addEventListener("change",function(){cb.closest(".check-item").classList.toggle("done",cb.checked);});});
   }
   var overlay=document.getElementById("brewsheet");
@@ -948,7 +967,7 @@
     rows.push(["salts_on",SALTS.filter(function(s){return st.salts[s.id];}).map(function(s){return s.id;}).join(";")]);
     rows.push(["grist",st.grist.map(function(g){return [(g.sel||"").replace(/[|;]/g," "),g.wt,g.L,g.t].join("|");}).join(";")]);
     var dz=readDoses(resultsActive);
-    rows.push(["doses",Object.keys(dz).map(function(id){return id+":"+(dz[id].mash||0).toFixed(3)+":"+(dz[id].sparge||0).toFixed(3);}).join(";")]);
+    rows.push(["doses",Object.keys(dz).map(function(id){return id+":"+(dz[id].mash||0).toFixed(3)+":"+(dz[id].sparge||0).toFixed(3)+":"+(dz[id].topup||0).toFixed(3);}).join(";")]);
     return rows.map(function(r){return r.map(csvEsc).join(",");}).join("\n");
   }
   function downloadText(name,text){
@@ -990,8 +1009,8 @@
     else makeGrainRow();
     recipeName.value=map.name||"";updateThick();
     var active=SALTS.filter(function(s){return document.getElementById("chk_"+s.id).checked;});
-    var dz={};(map.doses||"").split(";").filter(Boolean).forEach(function(cell){var p=cell.split(":");dz[p[0]]={mash:parseFloat(p[1])||0,sparge:parseFloat(p[2])||0};});
-    if(Object.keys(dz).length){active.forEach(function(s){if(!dz[s.id])dz[s.id]={mash:0,sparge:0};});renderResults(active,dz);}
+    var dz={};(map.doses||"").split(";").filter(Boolean).forEach(function(cell){var p=cell.split(":");dz[p[0]]={mash:parseFloat(p[1])||0,sparge:parseFloat(p[2])||0,topup:parseFloat(p[3])||0};});
+    if(Object.keys(dz).length){active.forEach(function(s){if(!dz[s.id])dz[s.id]={mash:0,sparge:0,topup:0};});renderResults(active,dz);}
     else{var a=autoAllocate();renderResults(a.active,a.doses);}
   }
   document.getElementById("loadCsv").addEventListener("change",function(){
