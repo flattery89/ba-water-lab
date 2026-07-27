@@ -256,6 +256,26 @@
     .ions{grid-template-columns:repeat(2,1fr);}
     .phdial .phnum{font-size:40px;}
   }
+  /* help buttons */
+  .help-btns{display:flex;gap:6px;}
+  .btn.mini{padding:6px 11px;font-size:11px;}
+  /* guided tour (coach marks) */
+  .tour[hidden]{display:none;}
+  .tour-catch{position:fixed;inset:0;z-index:9000;}
+  .tour-spot{position:relative;z-index:9001!important;border-radius:var(--r);
+    box-shadow:0 0 0 9999px rgba(6,4,2,.82),0 0 0 3px var(--amber)!important;}
+  .tour-tip{position:fixed;z-index:9002;width:min(340px,calc(100vw - 28px));
+    background:var(--surface);border:1px solid var(--amber);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 16px 12px;}
+  .tour-tip .tour-step{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber-ink);}
+  .tour-tip h4{margin:3px 0 7px;font-size:17px;font-weight:700;letter-spacing:-.01em;}
+  .tour-tip p{margin:0 0 13px;font-size:13.5px;color:var(--muted);line-height:1.5;}
+  .tour-nav{display:flex;gap:8px;align-items:center;}
+  /* SOP document */
+  .sop h3{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--amber-ink);
+    margin:22px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  .sop ul,.sop ol{margin:0 0 6px;padding-left:20px;}
+  .sop li{margin-bottom:8px;font-size:13.5px;line-height:1.55;color:var(--muted);}
+  .sop li b{color:var(--ink);}
   @media print{
     :root,:root[data-theme="dark"],:root[data-theme="light"]{--bg:#fff;--surface:#fff;--surface-2:#fff;--surface-3:#fff;--ink:#000;--muted:#333;--faint:#666;--line:#bbb;--line-2:#999;--amber:#9a6a10;--amber-ink:#7c5400;--shadow:none;}
     body{background:#fff;}
@@ -283,12 +303,13 @@
         <button id="uGal" aria-pressed="true">US gal</button>
         <button id="uL" aria-pressed="false">Liters</button>
       </div>
+      <div class="help-btns"><button id="tourBtn" class="btn mini gold">▶ Tutorial</button><button id="sopBtn" class="btn mini">SOP</button></div>
     </div>
   </header>
 
   <div class="grid">
     <div>
-      <section class="card">
+      <section class="card" id="cardSource">
         <h2><span class="lbl">Source water</span> <span class="hint">ppm · mash &amp; sparge</span></h2>
         <div class="body">
           <div class="field" style="margin-top:0"><label for="srcPreset">Start from</label><select id="srcPreset"></select></div>
@@ -302,7 +323,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="cardTarget">
         <h2><span class="lbl">Target profile</span> <span class="hint">flavor ions</span></h2>
         <div class="body">
           <div class="field" style="margin-top:0"><label for="tgtPreset">Beer style</label><select id="tgtPreset"></select></div>
@@ -310,7 +331,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="cardGrain">
         <h2><span class="lbl">Grain bill</span> <span class="hint">for mash pH</span></h2>
         <div class="body">
           <div class="grainhead"><span>Malt</span><span id="gwUnit">lb</span><span>°L</span><span>Type</span><span></span></div>
@@ -319,7 +340,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="cardWater">
         <h2><span class="lbl">Water split &amp; targets</span></h2>
         <div class="body">
           <div class="row between" style="gap:12px">
@@ -351,7 +372,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="cardShelf">
         <h2><span class="lbl">On the shelf</span> <span class="hint">check what you have</span></h2>
         <div class="body">
           <div class="salts" id="saltList"></div>
@@ -681,10 +702,10 @@
         return '<div class="doserow"><span class="drn">'+s.nm+' <small>'+s.fm+'</small></span>'+
           '<span class="drin"><input type="number" id="'+pfx+'_'+s.id+'" value="'+g.toFixed(2)+'" min="0" step="0.1" inputmode="decimal"><i>g</i></span></div>';}).join("")+'</div>';
     }
-    var profileCard='<section class="card rescard"><h2><span class="lbl">Final wort profile</span> <span class="hint">combined kettle · '+volLbl(mg+sg)+'</span></h2><div class="body" id="finalDerived"></div></section>';
-    var mashCard='<section class="card rescard"><h2><span class="lbl">① Mash tun</span> <span class="hint">'+volLbl(mg)+' · edit any value</span></h2><div class="body">'+
+    var profileCard='<section class="card rescard" id="cardFinal"><h2><span class="lbl">Final wort profile</span> <span class="hint">combined kettle · '+volLbl(mg+sg)+'</span></h2><div class="body" id="finalDerived"></div></section>';
+    var mashCard='<section class="card rescard" id="cardMash"><h2><span class="lbl">① Mash tun</span> <span class="hint">'+volLbl(mg)+' · edit any value</span></h2><div class="body">'+
       doseEdit("dm","mash",mg)+'<div class="striplabel">Resulting mash water · ppm</div><div id="mashStrip"></div><div id="mashPh"></div></div></section>';
-    var spargeCard='<section class="card rescard"><h2><span class="lbl">② Sparge vessel</span> <span class="hint">'+volLbl(sg)+' · edit any value</span></h2><div class="body">'+
+    var spargeCard='<section class="card rescard" id="cardSparge"><h2><span class="lbl">② Sparge vessel</span> <span class="hint">'+volLbl(sg)+' · edit any value</span></h2><div class="body">'+
       doseEdit("ds","sparge",sg)+'<div class="striplabel">Resulting sparge water · ppm</div><div id="spargeStrip"></div><div id="spargeAcid"></div></div></section>';
     col.innerHTML='<div id="feasNotes"></div>'+profileCard+mashCard+spargeCard;
     active.forEach(function(s){["dm_","ds_"].forEach(function(pfx){var el=document.getElementById(pfx+s.id);if(el)el.addEventListener("input",updateDerived);});});
@@ -819,6 +840,118 @@
   setUnit("gal");
   (function(){var a=autoAllocate();renderResults(a.active,a.doses);})();
 
+})();
+</script>
+
+<div id="tour" class="tour" hidden>
+  <div class="tour-catch"></div>
+  <div class="tour-tip" id="tourTip">
+    <div class="tour-step" id="tourStep"></div>
+    <h4 id="tourTitle"></h4>
+    <p id="tourBody"></p>
+    <div class="tour-nav">
+      <button id="tourSkip" class="btn ghost">Skip</button>
+      <span style="flex:1"></span>
+      <button id="tourBack" class="btn">Back</button>
+      <button id="tourNext" class="btn gold">Next</button>
+    </div>
+  </div>
+</div>
+
+<div id="sopModal" class="sheet-overlay" hidden>
+  <div class="sheet">
+    <div class="sheet-actions no-print">
+      <button class="btn gold" id="sopPrint">Print / Save PDF</button>
+      <button class="btn ghost" id="sopClose">Close</button>
+    </div>
+    <div class="sop">
+      <div class="sheet-head"><div class="sh-club">Brewers <b>Anonymous</b> · Standard Operating Procedure</div>
+        <div class="sh-recipe" style="font-size:23px">Using the Water Lab</div>
+        <div class="sh-meta">Source water → additions → brew-day sheet</div></div>
+      <h3>Before you start</h3>
+      <ul>
+        <li>Have your <b>source water report</b> in ppm (Ca, Mg, Na, SO&#8324;, Cl, HCO&#8323;) — or plan to brew with RO / distilled.</li>
+        <li>Know your <b>grain bill</b> (each malt, weight, color in &#176;L) and your <b>mash</b> and <b>sparge</b> volumes.</li>
+        <li>Keep a <b>pH meter</b> handy for brew day — the app predicts mash pH, but you confirm it.</li>
+      </ul>
+      <h3>Procedure</h3>
+      <ol>
+        <li><b>Source water.</b> Pick a preset or type your ppm. If your tap is hard, drag <b>Dilute with RO</b>; the Water split section then shows how much RO and tap to mix in each vessel.</li>
+        <li><b>Target profile.</b> Choose a Modern style or Classic city profile, or enter Custom numbers.</li>
+        <li><b>Grain bill.</b> Add each malt and weight. Colors auto-fill for known malts but can be edited to match your maltster.</li>
+        <li><b>Water split &amp; targets.</b> Enter mash and sparge volumes, target mash pH, sparge pH, salt strategy, and (once calibrated) the system calibration.</li>
+        <li><b>On the shelf.</b> Check the salts you actually own and select your acid.</li>
+        <li><b>Calculate.</b> The solver fills the additions for each vessel.</li>
+        <li><b>Review.</b> Compare the Final wort profile to target and read any <b>guardrail warnings</b> at the top — they flag unreachable targets and the fix (e.g. enable Slaked Lime, raise RO dilution).</li>
+        <li><b>Fine-tune.</b> Every salt amount is editable per vessel — nudge any value and the resulting ppm and mash pH update live.</li>
+        <li><b>Save.</b> Name the recipe and <b>Save .csv</b> to your device (or Load one back).</li>
+        <li><b>Brew day.</b> Open the <b>Brew-day sheet</b>, print it or keep it on your phone, and tick off each step: mix RO/tap per the blend guide, weigh salts into the correct vessel, stir in acid, and <b>verify mash pH with your meter</b>. Adjust the calibration slider next time so predictions match your system.</li>
+      </ol>
+      <h3>Good to know</h3>
+      <ul>
+        <li>Mash pH is an <b>estimate</b> — always confirm with a meter and calibrate to your system.</li>
+        <li>Classic city profiles are <b>reference points, not prescriptions</b>. For dark beers, let roasted grain provide acidity rather than chasing high bicarbonate.</li>
+        <li>Alkalinity salts (baking soda, slaked lime) always go in the <b>mash</b>, never the sparge.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var sop=document.getElementById("sopModal");
+  function openSop(){sop.hidden=false;document.body.style.overflow="hidden";}
+  function closeSop(){sop.hidden=true;document.body.style.overflow="";}
+  var sopBtn=document.getElementById("sopBtn");if(sopBtn)sopBtn.addEventListener("click",openSop);
+  document.getElementById("sopClose").addEventListener("click",closeSop);
+  document.getElementById("sopPrint").addEventListener("click",function(){window.print();});
+  sop.addEventListener("click",function(e){if(e.target===sop)closeSop();});
+
+  var STEPS=[
+    {el:null,t:"Welcome to the Water Lab",b:"A quick tour of the brew-day flow. Use Back / Next, or Skip anytime."},
+    {el:"cardSource",t:"1 · Source water",b:"Enter your water report or pick a preset. Hard tap water? Drag the RO / distilled slider to soften it — the app tells you how much of each to mix."},
+    {el:"cardTarget",t:"2 · Target profile",b:"Pick the water you're aiming for — a modern style or a classic city profile — or type your own numbers."},
+    {el:"cardGrain",t:"3 · Grain bill",b:"Add your malts and weights. Colors auto-fill for known malts but you can edit °L to match your supplier — it drives the mash-pH estimate."},
+    {el:"cardWater",t:"4 · Water split & targets",b:"Set mash and sparge volumes, your target mash pH, and the calibration slider (after you've measured a batch)."},
+    {el:"cardShelf",t:"5 · On the shelf",b:"Check the salts you actually own and choose your acid. The solver only uses what's ticked."},
+    {el:"calcBtn",t:"6 · Calculate",b:"Solve your additions. Re-hit this anytime to reset to the optimal blend."},
+    {el:"cardFinal",t:"Final wort profile",b:"Your combined water vs target. Warnings up top flag impossible targets and how to fix them."},
+    {el:"cardMash",t:"① Mash tun",b:"Mash additions, resulting ppm, and predicted pH. Every value is editable — override and watch it recompute live."},
+    {el:"cardSparge",t:"② Sparge vessel",b:"Separate salts and acid for your sparge water."},
+    {el:"recipeStep",t:"③ Save & brew day",b:"Save the recipe as CSV, load one back, or open the printable brew-day checklist. That's the whole flow — brew on!"}
+  ];
+  var idx=0,curEl=null;
+  var tour=document.getElementById("tour"),tip=document.getElementById("tourTip");
+  function clearSpot(){if(curEl){curEl.classList.remove("tour-spot");curEl=null;}}
+  function position(){
+    if(!curEl){tip.style.top="50%";tip.style.left="50%";tip.style.transform="translate(-50%,-50%)";return;}
+    tip.style.transform="none";
+    var r=curEl.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight,m=12;
+    var top=r.bottom+m;if(top+th>window.innerHeight-8)top=r.top-th-m;if(top<8)top=8;
+    var left=r.left;if(left+tw>window.innerWidth-8)left=window.innerWidth-8-tw;if(left<8)left=8;
+    tip.style.top=top+"px";tip.style.left=left+"px";
+  }
+  function render(){
+    clearSpot();var s=STEPS[idx];
+    document.getElementById("tourStep").textContent="Step "+(idx+1)+" of "+STEPS.length;
+    document.getElementById("tourTitle").textContent=s.t;
+    document.getElementById("tourBody").textContent=s.b;
+    document.getElementById("tourBack").style.visibility=idx===0?"hidden":"visible";
+    document.getElementById("tourNext").textContent=idx===STEPS.length-1?"Finish":"Next";
+    if(s.el){var el=document.getElementById(s.el);if(el){curEl=el;el.scrollIntoView({block:"center"});el.classList.add("tour-spot");}}
+    requestAnimationFrame(position);
+  }
+  function start(){idx=0;tour.hidden=false;render();}
+  function end(){clearSpot();tour.hidden=true;}
+  document.getElementById("tourNext").addEventListener("click",function(){if(idx<STEPS.length-1){idx++;render();}else end();});
+  document.getElementById("tourBack").addEventListener("click",function(){if(idx>0){idx--;render();}});
+  document.getElementById("tourSkip").addEventListener("click",end);
+  var tb=document.getElementById("tourBtn");if(tb)tb.addEventListener("click",start);
+  window.addEventListener("resize",function(){if(!tour.hidden)position();});
+  window.addEventListener("scroll",function(){if(!tour.hidden)position();},true);
+  document.addEventListener("keydown",function(e){if(tour.hidden)return;
+    if(e.key==="Escape")end();else if(e.key==="ArrowRight")document.getElementById("tourNext").click();
+    else if(e.key==="ArrowLeft")document.getElementById("tourBack").click();});
 })();
 </script>
 
