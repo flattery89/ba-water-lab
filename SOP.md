@@ -14,7 +14,7 @@ How to use the Brewers Anonymous Water Lab, from source water to brew day.
 1. **Set your units.** Choose gallons or liters in the header, plus **lb / oz** for grain (Grain bill) and **g / oz** for salts (On the shelf) to match your scales.
 2. **Source water.** Pick a preset or type your ppm. If your tap is hard, drag **Dilute with RO**; the Water split section then shows how much RO and tap to mix in each vessel.
 3. **Target profile.** Choose a Modern style or Classic city profile, or enter Custom numbers.
-4. **Grain bill.** Add each malt and weight. Colors auto-fill for known malts but can be edited to match your maltster. Add **Acid malt** here if you use it.
+4. **Grain bill.** Type a malt name (a suggestion list includes common base, crystal, roast, flaked and acid malts) or enter your own. Known malts auto-fill color and type; for custom ones you set them. Add **Acid malt** or flaked adjuncts here if you use them.
 5. **Water split & targets.** Enter mash and sparge volumes, target mash pH, and sparge pH. Tick **No sparge** for full-volume / BIAB (hides the sparge vessel). Pick a **salt strategy** — split salts across both waters, or all in the mash. Leave **calibration** at 0 until you've measured a batch (tap the **?** for how it works).
 6. **On the shelf.** Check the salts you actually own and select your acid (lactic 88%, phosphoric 10% or 75%).
 7. **Calculate.** The solver fills the additions for each vessel.
@@ -28,3 +28,5 @@ How to use the Brewers Anonymous Water Lab, from source water to brew day.
 - Mash pH is an **estimate** — always confirm with a meter and calibrate to your system.
 - Classic city profiles are **reference points, not prescriptions**. For dark beers, let roasted grain provide acidity rather than chasing high bicarbonate.
 - Alkalinity salts (baking soda, slaked lime) always go in the **mash**, never the sparge.
+- Calculate builds your profile with **gypsum and calcium chloride first**, using other salts only to balance — it avoids dumping baking soda you'd just neutralize with acid.
+- The **SO₄:Cl ratio** (tap the ? on the Final wort profile) sets malty↔hoppy feel: SO₄ dries and sharpens hops, Cl adds sweetness and body.

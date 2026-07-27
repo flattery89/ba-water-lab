@@ -999,7 +999,7 @@
         <li><b>Set your units.</b> Choose gallons or liters in the header, plus <b>lb / oz</b> for grain (Grain bill) and <b>g / oz</b> for salts (On the shelf) to match your scales.</li>
         <li><b>Source water.</b> Pick a preset or type your ppm. If your tap is hard, drag <b>Dilute with RO</b>; the Water split section then shows how much RO and tap to mix in each vessel.</li>
         <li><b>Target profile.</b> Choose a Modern style or Classic city profile, or enter Custom numbers.</li>
-        <li><b>Grain bill.</b> Add each malt and weight. Colors auto-fill for known malts but can be edited to match your maltster. Add <b>Acid malt</b> here if you use it.</li>
+        <li><b>Grain bill.</b> Type a malt name (a suggestion list includes common base, crystal, roast, flaked and acid malts) or enter your own. Known malts auto-fill color and type; for custom ones you set them. Add <b>Acid malt</b> or flaked adjuncts here if you use them.</li>
         <li><b>Water split &amp; targets.</b> Enter mash and sparge volumes, target mash pH, and sparge pH. Tick <b>No sparge</b> for full-volume / BIAB (hides the sparge vessel). Pick a <b>salt strategy</b> — split salts across both waters, or all in the mash. Leave <b>calibration</b> at 0 until you've measured a batch (tap the <b>?</b> for how).</li>
         <li><b>On the shelf.</b> Check the salts you actually own and select your acid (lactic 88%, phosphoric 10% or 75%).</li>
         <li><b>Calculate.</b> The solver fills the additions for each vessel.</li>
@@ -1013,6 +1013,8 @@
         <li>Mash pH is an <b>estimate</b> — always confirm with a meter and calibrate to your system.</li>
         <li>Classic city profiles are <b>reference points, not prescriptions</b>. For dark beers, let roasted grain provide acidity rather than chasing high bicarbonate.</li>
         <li>Alkalinity salts (baking soda, slaked lime) always go in the <b>mash</b>, never the sparge.</li>
+        <li>Calculate builds your profile with <b>gypsum and calcium chloride first</b>, using other salts only to balance — it avoids dumping baking soda you'd just neutralize with acid.</li>
+        <li>The <b>SO₄:Cl ratio</b> (tap the ? on the Final wort profile) sets malty↔hoppy feel: SO₄ dries and sharpens hops, Cl adds sweetness and body.</li>
       </ul>
     </div>
   </div>
@@ -1033,15 +1035,15 @@
     {el:"volToggle",t:"Units · gallons or liters",b:"Set your measurement system here. Everything — mash & sparge volumes and every addition — follows this choice."},
     {el:"cardSource",t:"Source water",b:"Enter your water report or pick a preset. Hard tap water? Drag the RO / distilled slider to soften it — the app tells you how much of each to mix."},
     {el:"cardTarget",t:"Target profile",b:"Pick the water you're aiming for — a modern style or a classic city profile — or type your own numbers."},
-    {el:"cardGrain",t:"Grain bill",b:"Add your malts and weights. Colors auto-fill for known malts but you can edit °L to match your supplier — it drives the mash-pH estimate."},
+    {el:"cardGrain",t:"Grain bill",b:"Type a malt name — a list suggests common malts (base, crystal, roast, flaked adjuncts, acid malt) — or just type your own. Known malts auto-fill color & type; for custom ones you set them. Weights and °L drive the mash-pH estimate."},
     {el:"gwToggle",t:"Grain weight · lb or oz",b:"Weigh your malts in pounds or ounces — handy for small specialty additions. Toggling converts the numbers for you."},
     {el:"cardWater",t:"Water split & targets",b:"Set your mash and sparge volumes, your target mash pH, and — after you've measured a real batch — the calibration slider to make the pH prediction match your system."},
     {el:"noSpargeRow",t:"No sparge / BIAB",b:"Brewing full-volume with no sparge (like BIAB)? Tick this and the Sparge vessel disappears — all your water and salts go into a single vessel."},
     {el:"saltField",t:"Salt strategy",b:"When mash and sparge are separate vessels: split the salts across both waters (each hits the profile), or put all flavor salts in the mash and leave the sparge plain. Alkalinity salts (baking soda, lime) always stay in the mash."},
     {el:"cardShelf",t:"On the shelf",b:"Check the salts you actually own and choose your acid. The solver only uses what's ticked."},
     {el:"swToggle",t:"Salt weight · g or oz",b:"Weigh your salt additions in grams or ounces to match your scale. Every dose and the brew-day sheet convert automatically."},
-    {el:"calcBtn",t:"Calculate",b:"Solve your additions. Re-hit this anytime to reset to the optimal blend."},
-    {el:"cardFinal",t:"Final wort profile",b:"Your combined water vs target. Watch for guardrail warnings above this card — they flag impossible targets and the fix. They look like this:",ex:'<div class="tour-warn-ex"><b>⚠</b> Your high bicarbonate target is forcing sodium over — enable Slaked Lime, then recalculate.</div>'},
+    {el:"calcBtn",t:"Calculate",b:"Solve your additions — it builds the profile with gypsum & calcium chloride first, uses the others only to balance, and avoids over-adding baking soda you'd just neutralize with acid. Re-hit anytime to reset."},
+    {el:"cardFinal",t:"Final wort profile",b:"Your combined water vs target. Tap the ? on the SO₄:Cl ratio to see how it shapes malty↔hoppy feel. And watch for guardrail warnings above this card — they flag impossible targets and the fix, like this:",ex:'<div class="tour-warn-ex"><b>⚠</b> Your high bicarbonate target is forcing sodium over — enable Slaked Lime, then recalculate.</div>'},
     {el:"cardMash",t:"① Mash tun",b:"Mash additions, resulting ppm, and predicted pH. Every value — salts and acid — is editable; override and watch it recompute live."},
     {el:"cardSparge",t:"② Sparge vessel",b:"Separate salts and acid for your sparge water. Also editable."},
     {el:"recipeStep",t:"Save & brew day",b:"Save the recipe as CSV, load one back, or open the printable brew-day checklist. That's the whole flow — brew on!"}
