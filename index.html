@@ -179,6 +179,9 @@
 
   .note{font-size:12.5px;color:var(--muted);line-height:1.55;margin-top:14px;padding:11px 13px;background:var(--surface-2);border-left:2px solid var(--amber);border-radius:0 var(--r) var(--r) 0;}
   .note b{color:var(--ink);}
+  .feaswrap{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+  .note.warn{border-left-color:var(--bad);margin-top:0;}
+  .note.info{border-left-color:var(--water);margin-top:0;}
   footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--faint);text-align:center;line-height:1.7;letter-spacing:.02em;}
   footer .fmotto{text-transform:uppercase;letter-spacing:.16em;color:var(--muted);font-size:10px;display:block;margin-bottom:8px;}
 
@@ -282,6 +285,12 @@
         <div class="body">
           <div class="field" style="margin-top:0"><label for="srcPreset">Start from</label><select id="srcPreset"></select></div>
           <div class="ions" id="srcIons" style="margin-top:14px"></div>
+          <div class="field calib">
+            <div class="crow"><label style="margin:0" for="roDil">Dilute with RO / distilled <span class="hint">softens hard source water</span></label>
+              <span class="cval" id="roDilVal">0%</span></div>
+            <input id="roDil" type="range" min="0" max="100" step="5" value="0">
+            <div class="cticks"><span>0% · tap only</span><span>100% · all RO</span></div>
+          </div>
         </div>
       </section>
 
@@ -533,6 +542,23 @@
   // ===== derived helpers =====
   function currentAcid(){var t=document.getElementById("acidType").value;
     return {type:t,mEqPerMl:t==="lactic88"?11.8:1.5,name:t==="lactic88"?"Lactic 88%":"Phosphoric 10%"};}
+  var roDil=document.getElementById("roDil"),roDilVal=document.getElementById("roDilVal");
+  function srcWater(){var s=readIons("src");var d=(parseFloat(roDil.value)||0)/100;
+    if(d>0)IONS.forEach(function(io){s[io.k]=s[io.k]*(1-d);});return s;}
+  roDil.addEventListener("input",function(){roDilVal.textContent=(parseFloat(roDil.value)||0)+"%";updateDerived();});
+  function feasHtml(active,res,tgt,src,plan){
+    var notes=[];var limeOn=document.getElementById("chk_lime").checked;var dil=parseFloat(roDil.value)||0;
+    if(!limeOn){
+      var naOver=(res.Na-tgt.Na)>25&&tgt.HCO3>60;
+      var caStuck=(tgt.Ca-res.Ca)>25&&((res.SO4-tgt.SO4)>15||(res.Cl-tgt.Cl)>15);
+      if(naOver||caStuck)notes.push({t:"warn",h:(naOver?"Your high bicarbonate target is forcing sodium over target":"Calcium is capped by sulfate &amp; chloride")+" — <b>enable Slaked Lime</b> on the shelf, then recalculate. It adds calcium and alkalinity together with no sodium, sulfate, or chloride."});
+    }
+    var high=[];IONS.forEach(function(io){if(io.k==="HCO3")return;if(src[io.k]-tgt[io.k]>25)high.push(io.n);});
+    if(high.length)notes.push({t:"warn",h:"Source water is high in <b>"+high.join(", ")+"</b> — salts only add, never remove. "+(dil<95?"Raise the <b>RO / distilled dilution</b> slider to bring "+(high.length>1?"them":"it")+" down.":"You're already near 100% RO — double-check your source numbers.")});
+    if(plan.mash.acid&&plan.mash.acid.amt>3&&tgt.HCO3>80)notes.push({t:"info",h:"You're building ~"+fmt(res.HCO3,0)+" ppm alkalinity, then adding "+fmt(plan.mash.acid.amt,1)+" mL acid to pull mash pH back down — they fight each other. For a dark beer, target lower bicarbonate and let the roasted grain do the acidifying."});
+    if(!notes.length)return "";
+    return '<div class="feaswrap">'+notes.slice(0,3).map(function(n){return '<div class="note '+n.t+'">'+n.h+'</div>';}).join("")+'</div>';
+  }
   function readDoses(active){var d={};active.forEach(function(s){
     var em=document.getElementById("dm_"+s.id),es=document.getElementById("ds_"+s.id);
     var m=em?parseFloat(em.value):0,sp=es?parseFloat(es.value):0;
@@ -549,8 +575,6 @@
   function finalHtml(res,tgt,src){
     var ratio=res.Cl>1?res.SO4/res.Cl:(res.SO4>0?99:0);
     var rTxt=res.SO4<5&&res.Cl<5?"—":ratio>=2?"Very hoppy / dry":ratio>=1.3?"Hoppy":ratio>=0.7?"Balanced":ratio>=0.4?"Malty":"Very malty";
-    var over=[];IONS.forEach(function(io){if(io.k==="HCO3")return;if(src[io.k]-tgt[io.k]>35)over.push(io.n);});
-    var overNote=over.length?'<div class="note"><b>Can\'t be lowered with salts:</b> source is already high in '+over.join(", ")+'. Blend with RO/distilled to bring these down.</div>':"";
     var maxScale={};IONS.forEach(function(io){maxScale[io.k]=Math.max(res[io.k],tgt[io.k],src[io.k],1)*1.15;});
     var rows=IONS.map(function(io){var r=res[io.k],t=tgt[io.k],sc=maxScale[io.k],cls=classify(r,t),d=r-t;
       return '<tr><td class="nm">'+io.n+'<small>'+io.full+'</small></td><td class="num">'+fmt(r,0)+'</td><td class="num tgt">'+fmt(t,0)+
@@ -561,7 +585,7 @@
       '<div class="metric"><div class="ml">SO₄ : Cl</div><div class="mv">'+(ratio>=99?"∞":fmt(ratio,2))+'</div><div class="md" style="color:var(--amber-ink)">'+rTxt+'</div></div>'+
       '<div class="metric"><div class="ml">Calcium</div><div class="mv">'+fmt(res.Ca,0)+'<span style="font-size:12px;color:var(--faint)"> ppm</span></div><div class="md" style="color:'+
       (res.Ca>=40&&res.Ca<=150?'var(--good)':'var(--warn)')+'">'+(res.Ca<40?'low for mash':res.Ca>150?'high':'good range')+'</div></div></div>'+
-      '<div class="tablewrap"><table class="cmp"><thead><tr><th>Ion</th><th>Result</th><th>Target</th><th>Result ▏= aim</th><th>Δ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+overNote;
+      '<div class="tablewrap"><table class="cmp"><thead><tr><th>Ion</th><th>Result</th><th>Target</th><th>Result ▏= aim</th><th>Δ</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
   function mashPhHtml(grist,mashProfile,mg,cal,A,plan){
     if(!(grist.length>0&&mg>0))return '<div class="note">Add malts and a mash volume to predict mash pH and acid.</div>';
@@ -594,7 +618,7 @@
   // ===== auto solve + render + live update =====
   var resultsActive=[];
   function autoAllocate(){
-    var src=readIons("src"),tgt=readIons("tgt");
+    var src=srcWater(),tgt=readIons("tgt");
     var active=SALTS.filter(function(s){return document.getElementById("chk_"+s.id).checked;});
     var mg=mashGal(),sg=spargeGal(),tot=mg+sg;
     var split=document.getElementById("saltSplit").value;var ALK={bak:1,lime:1};
@@ -620,13 +644,13 @@
       doseEdit("dm","mash",mg)+'<div class="striplabel">Resulting mash water · ppm</div><div id="mashStrip"></div><div id="mashPh"></div></div></section>';
     var spargeCard='<section class="card rescard"><h2><span class="lbl">② Sparge vessel</span> <span class="hint">'+volLbl(sg)+' · edit any value</span></h2><div class="body">'+
       doseEdit("ds","sparge",sg)+'<div class="striplabel">Resulting sparge water · ppm</div><div id="spargeStrip"></div><div id="spargeAcid"></div></div></section>';
-    col.innerHTML=profileCard+mashCard+spargeCard;
+    col.innerHTML='<div id="feasNotes"></div>'+profileCard+mashCard+spargeCard;
     active.forEach(function(s){["dm_","ds_"].forEach(function(pfx){var el=document.getElementById(pfx+s.id);if(el)el.addEventListener("input",updateDerived);});});
     updateDerived();
   }
   function updateDerived(){
     var active=resultsActive;if(!active.length)return;
-    var src=readIons("src"),tgt=readIons("tgt");var grist=readGrist();
+    var src=srcWater(),tgt=readIons("tgt");var grist=readGrist();
     var mg=mashGal(),sg=spargeGal();var A=currentAcid();var cal=parseFloat(calib.value)||0;
     var doses=readDoses(active);
     var mashProfile=mg>0?profileFrom(active,doses,"mash",mg,src):Object.assign({},src);
@@ -640,6 +664,7 @@
     var mph=document.getElementById("mashPh");if(mph)mph.innerHTML=mashPhHtml(grist,mashProfile,mg,cal,A,plan);
     var ss=document.getElementById("spargeStrip");if(ss)ss.innerHTML=ionStrip(spargeProfile,tgt);
     var sa=document.getElementById("spargeAcid");if(sa)sa.innerHTML=spargeHtml(spargeProfile,sg,A,plan);
+    var fn=document.getElementById("feasNotes");if(fn)fn.innerHTML=feasHtml(active,res,tgt,src,plan);
     lastPlan=plan;
     requestAnimationFrame(function(){var f=document.querySelectorAll("#finalDerived .fill");for(var i=0;i<f.length;i++)f[i].style.width=f[i].getAttribute("data-w")+"%";});
   }
@@ -685,7 +710,7 @@
   document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!overlay.hidden){overlay.hidden=true;document.body.style.overflow="";}});
 
   // ===== CSV save / load =====
-  function gatherState(){return{unit:state.unit,srcPreset:srcPreset.value,src:readIons("src"),
+  function gatherState(){return{unit:state.unit,srcPreset:srcPreset.value,src:readIons("src"),roDil:roDil.value,
     tgtPreset:tgtPreset.value,tgt:readIons("tgt"),grist:rawGrist(),
     mashVol:document.getElementById("mashVol").value,spargeVol:document.getElementById("spargeVol").value,
     phTarget:document.getElementById("phTarget").value,spargePh:document.getElementById("spargePh").value,
@@ -698,7 +723,7 @@
     rows.push(["name",recipeName.value||st.tgtPreset]);rows.push(["unit",st.unit]);
     rows.push(["mash_vol",st.mashVol]);rows.push(["sparge_vol",st.spargeVol]);
     rows.push(["target_ph",st.phTarget]);rows.push(["sparge_ph",st.spargePh]);
-    rows.push(["calib",st.calib]);rows.push(["acid",st.acidType]);rows.push(["salt_split",st.saltSplit]);
+    rows.push(["calib",st.calib]);rows.push(["acid",st.acidType]);rows.push(["salt_split",st.saltSplit]);rows.push(["ro_dilution",st.roDil]);
     IONS.forEach(function(io){rows.push(["source_"+io.k,st.src[io.k]]);});
     IONS.forEach(function(io){rows.push(["target_"+io.k,st.tgt[io.k]]);});
     rows.push(["salts_on",SALTS.filter(function(s){return st.salts[s.id];}).map(function(s){return s.id;}).join(";")]);
@@ -734,6 +759,7 @@
     calib.value=map.calib||0;calibVal.textContent=fmtSigned(parseFloat(calib.value)||0);
     document.getElementById("acidType").value=map.acid||"lactic88";
     document.getElementById("saltSplit").value=map.salt_split||"proportional";
+    if("ro_dilution" in map){roDil.value=map.ro_dilution||0;roDilVal.textContent=(parseFloat(roDil.value)||0)+"%";}
     var on=(map.salts_on||"").split(";");SALTS.forEach(function(s){document.getElementById("chk_"+s.id).checked=on.indexOf(s.id)>=0;});
     grainRows.innerHTML="";var gs=(map.grist||"").split(";").filter(Boolean);
     if(gs.length)gs.forEach(function(cell){var p=cell.split("|");makeGrainRow({sel:p[0],wt:parseFloat(p[1])||0,L:parseFloat(p[2])||0,t:p[3]||"base"});});
